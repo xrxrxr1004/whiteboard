@@ -53,7 +53,6 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .theme-dark .grammar-point .example { background: rgba(167,139,250,0.06); }
 .theme-dark .ks-block { background: rgba(255,255,255,0.03); border-left-color: #a78bfa; }
 .theme-dark .ks-note { background: rgba(167,139,250,0.15); color: #c4b5fd; }
-.theme-dark .reveal-label { background: rgba(167,139,250,0.15); border-color: #5b21b6; color: #c4b5fd; }
 .theme-dark .vocab-badge { background: rgba(255,255,255,0.06); border-color: #2a2a40; color: #9e9eb8; }
 .theme-dark .vocab-badge b { color: #e0e0e0; }
 .theme-dark .passage-notes { background: #0a0a12; border-left: 1px solid #2a2a40; }
@@ -67,7 +66,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .theme-dark .slide-header { color: #a78bfa; }
 .theme-dark .freeform-content th { border-color: #a78bfa; }
 .theme-dark .freeform-content td { border-bottom-color: #2a2a40; }
-.theme-dark .reveal-target.text-hl {
+.theme-dark .text-hl {
   background: linear-gradient(transparent 65%, rgba(250,204,21,0.3) 65%);
 }
 .theme-dark .nav-zone svg { fill: rgba(255,255,255,0.12); }
@@ -112,20 +111,6 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   width: 20px; height: 3px; background: var(--toolbar-active); border-radius: 2px;
 }
 .tool-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
-.color-dot {
-  width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.color-dot:hover { transform: scale(1.15); }
-.color-dot.active { border-color: #fff; transform: scale(1.2); }
-.width-btn {
-  width: 40px; height: var(--touch-target); display: flex; align-items: center;
-  justify-content: center; cursor: pointer; border: none; background: none;
-  border-radius: 8px; transition: background 0.15s;
-}
-.width-btn:hover { background: var(--toolbar-hover); }
-.width-btn.active { background: rgba(124,58,237,0.25); }
-.width-line { background: #e2e8f0; border-radius: 4px; }
 #slide-counter {
   font-size: 14px; font-weight: 600; min-width: 60px; text-align: center;
   color: #e2e8f0; letter-spacing: 1px;
@@ -226,26 +211,16 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .passage-notes-body textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 .passage-notes-body textarea::placeholder { color: #94a3b8; }
 .passage-text { font-size: 1.15em; line-height: 2; word-spacing: 1px; }
-.reveal-target {
-  position: relative; filter: blur(6px); user-select: none; cursor: default;
-  transition: filter 0.5s ease, background 0.5s ease; padding: 2px 0; border-radius: 2px;
-  -webkit-box-decoration-break: clone; box-decoration-break: clone;
-}
-.reveal-target.revealed {
-  filter: none; user-select: auto;
-}
-.reveal-target.text-hl {
+.text-hl {
   background: linear-gradient(transparent 65%, rgba(254,240,138,0.6) 65%);
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
-  background-attachment: scroll;
+  background-attachment: scroll; padding: 2px 0; border-radius: 2px;
 }
-.reveal-label {
-  position: absolute; top: -22px; left: 0; font-size: 11px; font-weight: 700;
-  color: var(--purple); background: #f5f3ff; padding: 1px 8px; border-radius: 4px;
-  border: 1px solid #ddd6fe; white-space: nowrap; opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
+.twoF-hidden { display: none; }
+.twoF-ellipsis {
+  display: inline; color: #94a3b8; font-weight: 700; letter-spacing: 2px;
+  user-select: none; padding: 0 4px;
 }
-.reveal-target.revealed .reveal-label { opacity: 1; }
 
 /* Sentence click-to-underline */
 .sentence { cursor: pointer; transition: border-bottom 0.2s ease, background 0.2s ease; border-bottom: 2px solid transparent; }
@@ -554,6 +529,171 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   #toolbar { padding: 0 6px; gap: 2px; }
   .tool-btn { min-width: 44px; height: 44px; padding: 0 6px; font-size: 11px; }
 }
+
+/* ===== RADIAL FLOATING PALETTE ===== */
+#radial-palette {
+  position: absolute;
+  z-index: 15;
+  width: 0; height: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rp-hub {
+  position: absolute;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: rgba(15,23,42,0.92);
+  border: 3px solid rgba(255,255,255,0.2);
+  color: #e2e8f0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transform: translate(-50%,-50%);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 3;
+  touch-action: none;
+  padding: 0;
+}
+.rp-hub:active { cursor: grabbing; }
+.rp-hub svg { width: 26px; height: 26px; pointer-events: none; }
+.rp-hub:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.4); }
+#rp-hub-ring {
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 3px solid var(--rp-active-color, #e11d48);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#radial-palette.rp-drawing #rp-hub-ring { opacity: 1; }
+
+.rp-ring { position: absolute; top: 0; left: 0; pointer-events: none; }
+.rp-ring .rp-item { pointer-events: auto; }
+
+.rp-item {
+  position: absolute;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(15,23,42,0.9);
+  border: 2px solid rgba(255,255,255,0.15);
+  color: #e2e8f0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  transform: translate(-50%,-50%) scale(0);
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1),
+              opacity 0.2s ease,
+              background 0.15s, border-color 0.15s;
+  padding: 0;
+}
+.rp-item svg { width: 22px; height: 22px; pointer-events: none; }
+.rp-item:hover { background: rgba(124,58,237,0.3); border-color: rgba(255,255,255,0.3); }
+.rp-item.rp-active { background: rgba(124,58,237,0.4); border-color: #a78bfa; color: #c4b5fd; }
+
+/* Collapsed: all hidden */
+#radial-palette.rp-collapsed .rp-ring { pointer-events: none; }
+#radial-palette.rp-collapsed .rp-item {
+  transform: translate(-50%,-50%) scale(0);
+  opacity: 0; pointer-events: none; transition-delay: 0ms;
+}
+
+/* Level 1: inner ring tools visible */
+#radial-palette.rp-level1 .rp-ring-inner .rp-item {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--rp-x,0px)), calc(-50% + var(--rp-y,0px))) scale(1);
+}
+
+/* Level 2: selected tool stays, others minimize */
+#radial-palette.rp-level2 .rp-ring-inner .rp-item {
+  opacity: 0.35;
+  transform: translate(calc(-50% + var(--rp-x,0px) * 0.6), calc(-50% + var(--rp-y,0px) * 0.6)) scale(0.55);
+  pointer-events: none;
+}
+#radial-palette.rp-level2 .rp-ring-inner .rp-item.rp-selected {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--rp-x,0px)), calc(-50% + var(--rp-y,0px))) scale(1.08);
+  pointer-events: auto;
+  background: rgba(124,58,237,0.5);
+  border-color: #a78bfa;
+  box-shadow: 0 0 16px rgba(124,58,237,0.4);
+}
+/* Outer ring visible in level 2 */
+#radial-palette.rp-level2 .rp-ring-outer .rp-item {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--rp-x,0px)), calc(-50% + var(--rp-y,0px))) scale(1);
+}
+
+/* Stagger inner */
+.rp-ring-inner .rp-item:nth-child(1) { transition-delay: 0ms; }
+.rp-ring-inner .rp-item:nth-child(2) { transition-delay: 40ms; }
+.rp-ring-inner .rp-item:nth-child(3) { transition-delay: 80ms; }
+.rp-ring-inner .rp-item:nth-child(4) { transition-delay: 120ms; }
+/* Stagger outer */
+.rp-ring-outer .rp-item:nth-child(1) { transition-delay: 60ms; }
+.rp-ring-outer .rp-item:nth-child(2) { transition-delay: 90ms; }
+.rp-ring-outer .rp-item:nth-child(3) { transition-delay: 120ms; }
+.rp-ring-outer .rp-item:nth-child(4) { transition-delay: 150ms; }
+.rp-ring-outer .rp-item:nth-child(5) { transition-delay: 180ms; }
+.rp-ring-outer .rp-item:nth-child(6) { transition-delay: 210ms; }
+.rp-ring-outer .rp-item:nth-child(7) { transition-delay: 240ms; }
+.rp-ring-outer .rp-item:nth-child(8) { transition-delay: 270ms; }
+
+/* Color swatches */
+.rp-color-swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3); pointer-events: none;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.rp-item.rp-active .rp-color-swatch { border-color: #fff; transform: scale(1.15); }
+
+/* Width lines */
+.rp-width-line { width: 22px; border-radius: 4px; background: #e2e8f0; pointer-events: none; }
+.rp-item.rp-active .rp-width-line { background: #c4b5fd; }
+
+/* Dragging state */
+#radial-palette.rp-dragging .rp-hub {
+  cursor: grabbing;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: translate(-50%,-50%) scale(1.08);
+}
+
+/* Dark theme */
+.theme-dark .rp-hub { background: rgba(10,10,18,0.95); border-color: rgba(255,255,255,0.1); }
+.theme-dark .rp-item { background: rgba(10,10,18,0.95); border-color: rgba(255,255,255,0.08); }
+.theme-dark .rp-item:hover { background: rgba(167,139,250,0.2); }
+.theme-dark .rp-item.rp-active { background: rgba(167,139,250,0.3); border-color: #a78bfa; }
+.theme-dark #radial-palette.rp-level2 .rp-ring-inner .rp-item.rp-selected {
+  background: rgba(167,139,250,0.4); border-color: #a78bfa;
+}
+
+/* Eraser sub-ring: hidden by default */
+.rp-ring-eraser .rp-item {
+  opacity: 0; transform: translate(-50%,-50%) scale(0); pointer-events: none;
+}
+/* Show eraser ring when eraser is active in level2 */
+#radial-palette.rp-level2.rp-eraser-l2 .rp-ring-eraser .rp-item {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--rp-x,0px)), calc(-50% + var(--rp-y,0px))) scale(1);
+  pointer-events: auto;
+}
+/* Hide outer ring when eraser level2 */
+#radial-palette.rp-level2.rp-eraser-l2 .rp-ring-outer .rp-item {
+  opacity: 0 !important; transform: translate(-50%,-50%) scale(0) !important; pointer-events: none !important;
+}
+/* Stagger eraser ring */
+.rp-ring-eraser .rp-item:nth-child(1) { transition-delay: 60ms; }
+.rp-ring-eraser .rp-item:nth-child(2) { transition-delay: 100ms; }
+.rp-ring-eraser .rp-item:nth-child(3) { transition-delay: 140ms; }
+.rp-ring-eraser .rp-item:nth-child(4) { transition-delay: 180ms; }
+/* Eraser size dots */
+.rp-esize-dot { border-radius: 50%; background: #e2e8f0; pointer-events: none; }
+.rp-item.rp-active .rp-esize-dot { background: #c4b5fd; }
+/* Pixel eraser cursor */
+#drawing-canvas.mode-eraser-pixel { cursor: crosshair; }
+
+.theme-dark .rp-item.rp-active .rp-esize-dot { background: #a78bfa; }
 </style>
 </head>
 <body>
@@ -566,36 +706,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
       <button class="tool-btn active" data-tool="navigate" title="포인터 (Esc)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
       </button>
-      <button class="tool-btn" data-tool="pen" title="펜">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-      </button>
-      <button class="tool-btn" data-tool="highlighter" title="형광펜">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
-      </button>
-      <button class="tool-btn" data-tool="eraser" title="지우개">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
-      </button>
-      <button class="tool-btn" data-tool="clear" title="전체 삭제">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-      </button>
     </div>
     <div class="tool-sep"></div>
-    <!-- Colors -->
-    <div class="tool-group" id="color-group">
-      <div class="color-dot active" data-color="#e11d48" style="background:#e11d48" title="빨강"></div>
-      <div class="color-dot" data-color="#2563eb" style="background:#2563eb" title="파랑"></div>
-      <div class="color-dot" data-color="#059669" style="background:#059669" title="초록"></div>
-      <div class="color-dot" data-color="#0f172a" style="background:#0f172a" title="검정"></div>
-      <div class="color-dot" data-color="#eab308" style="background:#eab308" title="노랑"></div>
-    </div>
-    <div class="tool-sep"></div>
-    <!-- Pen width -->
-    <div class="tool-group" id="width-group">
-      <button class="width-btn" data-width="2" title="얇게"><div class="width-line" style="width:16px;height:2px"></div></button>
-      <button class="width-btn active" data-width="4" title="보통"><div class="width-line" style="width:16px;height:4px"></div></button>
-      <button class="width-btn" data-width="8" title="굵게"><div class="width-line" style="width:16px;height:8px"></div></button>
-    </div>
-    <div class="tool-sep-wide"></div>
     <!-- Navigation -->
     <div class="tool-group">
       <button class="tool-btn" id="btn-prev" title="이전 (←)">
@@ -614,10 +726,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
       <button class="tool-btn" id="btn-bg" title="배경 전환 (B)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>
       </button>
-      <button class="tool-btn" id="btn-reveal" title="Reveal (R)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
-      <button class="tool-btn" id="btn-reveal-middle" title="중간 공개" style="font-weight:800;color:#fbbf24;font-size:14px">2-F</button>
+      <button class="tool-btn" id="btn-twoF" title="첫2+끝1 문장 (F)" style="font-weight:800;color:#fbbf24;font-size:14px">2-F</button>
       <button class="tool-btn" id="btn-panel" title="자료 패널">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
       </button>
@@ -636,6 +745,56 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   <div id="slide-container">
     <div id="slide-track"></div>
     <canvas id="drawing-canvas" class="mode-navigate"></canvas>
+
+    <!-- FLOATING RADIAL PALETTE -->
+    <div id="radial-palette" class="rp-collapsed">
+      <button id="rp-hub" class="rp-hub" aria-label="Drawing tools">
+        <svg id="rp-hub-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        <div id="rp-hub-ring"></div>
+      </button>
+      <!-- Inner ring: tools -->
+      <div class="rp-ring rp-ring-inner">
+        <button class="rp-item rp-tool" data-rp-tool="pen" data-rp-angle="0" title="펜">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        <button class="rp-item rp-tool" data-rp-tool="highlighter" data-rp-angle="90" title="형광펜">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+        </button>
+        <button class="rp-item rp-tool" data-rp-tool="eraser" data-rp-angle="180" title="지우개">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+        </button>
+        <button class="rp-item rp-tool" data-rp-tool="sidepanel" data-rp-angle="270" title="자료 패널">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+        </button>
+      </div>
+      <!-- Outer ring: colors + widths -->
+      <div class="rp-ring rp-ring-outer" id="rp-ring-outer">
+        <button class="rp-item rp-color" data-rp-color="#e11d48" data-rp-angle="0" title="빨강"><div class="rp-color-swatch" style="background:#e11d48"></div></button>
+        <button class="rp-item rp-color" data-rp-color="#2563eb" data-rp-angle="45" title="파랑"><div class="rp-color-swatch" style="background:#2563eb"></div></button>
+        <button class="rp-item rp-color" data-rp-color="#059669" data-rp-angle="90" title="초록"><div class="rp-color-swatch" style="background:#059669"></div></button>
+        <button class="rp-item rp-color" data-rp-color="#0f172a" data-rp-angle="135" title="검정"><div class="rp-color-swatch" style="background:#0f172a"></div></button>
+        <button class="rp-item rp-color" data-rp-color="#eab308" data-rp-angle="180" title="노랑"><div class="rp-color-swatch" style="background:#eab308"></div></button>
+        <button class="rp-item rp-width" data-rp-width="2" data-rp-angle="225" title="얇게"><div class="rp-width-line" style="height:2px"></div></button>
+        <button class="rp-item rp-width" data-rp-width="4" data-rp-angle="270" title="보통"><div class="rp-width-line" style="height:4px"></div></button>
+        <button class="rp-item rp-width" data-rp-width="8" data-rp-angle="315" title="굵게"><div class="rp-width-line" style="height:8px"></div></button>
+      </div>
+      <!-- Eraser sub-ring: modes + sizes -->
+      <div class="rp-ring rp-ring-eraser">
+        <button class="rp-item rp-eraser-opt" data-rp-eraser="stroke" title="획 지우기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20" stroke-width="2.5" stroke-linecap="round"/><path d="M9 7l6 10" stroke-width="1.5" opacity="0.5"/><path d="M15 7l-6 10" stroke-width="1.5" opacity="0.5"/></svg>
+        </button>
+        <button class="rp-item rp-eraser-opt rp-esize" data-rp-eraser="pixel" data-rp-esize="12" title="부분 지우기 (작게)">
+          <div class="rp-esize-dot" style="width:12px;height:12px"></div>
+        </button>
+        <button class="rp-item rp-eraser-opt rp-esize" data-rp-eraser="pixel" data-rp-esize="24" title="부분 지우기 (보통)">
+          <div class="rp-esize-dot" style="width:20px;height:20px"></div>
+        </button>
+        <button class="rp-item rp-eraser-opt rp-esize" data-rp-eraser="pixel" data-rp-esize="40" title="부분 지우기 (크게)">
+          <div class="rp-esize-dot" style="width:30px;height:30px"></div>
+        </button>
+      </div>
+    </div>
+
     <!-- Nav touch zones -->
     <div class="nav-zone" id="nav-prev" title="이전">
       <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
@@ -763,7 +922,7 @@ const STATE = {
   currentStroke: null,
   slideDrawings: {},
   undoStack: {},
-  revealState: {},
+  twoFActive: false,
   toolbarVisible: true,
   toolbarTimer: null,
   panelOpen: false,
@@ -772,12 +931,322 @@ const STATE = {
   bgIndex: 0,
   lesson: null,
   blackout: false,
-  textHighlighting: false
+  textHighlighting: false,
+  eraserMode: 'stroke',    // 'stroke' or 'pixel'
+  pixelEraserSize: 24,     // pixel eraser brush diameter
+  isErasing: false,
+  paletteLevel: 0,   // 0=collapsed, 1=level1(tools), 2=level2(colors/eraser-options)
+  palettePos: null
 };
 
 const BACKGROUNDS = ['white', 'grid', 'lined', 'dark', 'sepia'];
 const TOOL_LABELS = { navigate: '포인터', pen: '펜', highlighter: '형광펜', eraser: '지우개' };
 const OPTION_LABELS = ['①', '②', '③', '④', '⑤'];
+
+// ===== RADIAL PALETTE =====
+const RP_INNER_RADIUS = 75;
+const RP_OUTER_RADIUS = 130;
+const RP_DRAG_THRESHOLD = 8;
+const RP_PALETTE_KEY = 'wb_palette_pos';
+const RP_TOOL_ICONS = {
+  navigate: '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>',
+  pen: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  highlighter: '<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>',
+  eraser: '<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>'
+};
+
+function initPalette() {
+  const container = document.querySelector('#slide-container');
+  const rect = container.getBoundingClientRect();
+  const saved = loadPalettePos();
+  const pos = saved || { x: rect.width - 80, y: rect.height - 80 };
+  STATE.palettePos = pos;
+  applyPalettePos(pos);
+  computeRingPositions();
+  updatePaletteHub();
+  updatePaletteActiveStates();
+}
+
+function computeRingPositions() {
+  document.querySelectorAll('.rp-ring-inner .rp-item').forEach(item => {
+    const deg = parseInt(item.dataset.rpAngle);
+    const rad = (deg - 90) * Math.PI / 180;
+    item.style.setProperty('--rp-x', (RP_INNER_RADIUS * Math.cos(rad)) + 'px');
+    item.style.setProperty('--rp-y', (RP_INNER_RADIUS * Math.sin(rad)) + 'px');
+  });
+  document.querySelectorAll('.rp-ring-outer .rp-item').forEach(item => {
+    const deg = parseInt(item.dataset.rpAngle);
+    const rad = (deg - 90) * Math.PI / 180;
+    item.style.setProperty('--rp-x', (RP_OUTER_RADIUS * Math.cos(rad)) + 'px');
+    item.style.setProperty('--rp-y', (RP_OUTER_RADIUS * Math.sin(rad)) + 'px');
+  });
+}
+
+function updatePaletteHub() {
+  const icon = document.querySelector('#rp-hub-icon');
+  const palette = document.querySelector('#radial-palette');
+  if (!icon || !palette) return;
+  const tool = STATE.drawingMode;
+  icon.innerHTML = RP_TOOL_ICONS[tool] || RP_TOOL_ICONS.pen;
+  const isDrawing = (tool === 'pen' || tool === 'highlighter');
+  palette.classList.toggle('rp-drawing', isDrawing);
+  if (isDrawing) palette.style.setProperty('--rp-active-color', STATE.penColor);
+}
+
+function updatePaletteActiveStates() {
+  document.querySelectorAll('.rp-tool').forEach(b => {
+    const t = b.dataset.rpTool;
+    b.classList.toggle('rp-active', t === STATE.drawingMode);
+  });
+  document.querySelectorAll('.rp-color').forEach(b => b.classList.toggle('rp-active', b.dataset.rpColor === STATE.penColor));
+  document.querySelectorAll('.rp-width').forEach(b => b.classList.toggle('rp-active', b.dataset.rpWidth === String(STATE.penWidth)));
+}
+
+function setPaletteLevel(level) {
+  const p = document.querySelector('#radial-palette');
+  if (!p) return;
+  p.classList.remove('rp-collapsed', 'rp-level1', 'rp-level2');
+  if (level === 0) p.classList.add('rp-collapsed');
+  else if (level === 1) p.classList.add('rp-level1');
+  else if (level === 2) p.classList.add('rp-level2');
+  STATE.paletteLevel = level;
+  if (level === 1) updatePaletteActiveStates();
+  // Clear rp-selected on all inner items when not level2
+  if (level !== 2) {
+    document.querySelectorAll('.rp-ring-inner .rp-item').forEach(b => b.classList.remove('rp-selected'));
+  }
+}
+
+function collapsePalette() {
+  const p = document.querySelector('#radial-palette');
+  if (p) p.classList.remove('rp-eraser-l2');
+  setPaletteLevel(0);
+}
+
+function togglePalette() {
+  STATE.paletteLevel === 0 ? setPaletteLevel(1) : setPaletteLevel(0);
+}
+
+function enterLevel2(toolName) {
+  const palette = document.querySelector('#radial-palette');
+  // Mark selected tool
+  const selectedBtn = document.querySelector(`.rp-tool[data-rp-tool="${toolName}"]`);
+  document.querySelectorAll('.rp-ring-inner .rp-item').forEach(b => {
+    b.classList.toggle('rp-selected', b === selectedBtn);
+  });
+  const toolAngle = parseInt(selectedBtn.dataset.rpAngle);
+
+  if (toolName === 'eraser') {
+    // Eraser level2: show eraser sub-ring
+    palette.classList.add('rp-eraser-l2');
+    const eraserItems = document.querySelectorAll('.rp-ring-eraser .rp-item');
+    const count = eraserItems.length;
+    const spacing = 30;
+    const startAngle = toolAngle - (count - 1) * spacing / 2;
+    eraserItems.forEach((item, i) => {
+      const deg = startAngle + i * spacing;
+      const rad = (deg - 90) * Math.PI / 180;
+      item.style.setProperty('--rp-x', (RP_OUTER_RADIUS * Math.cos(rad)) + 'px');
+      item.style.setProperty('--rp-y', (RP_OUTER_RADIUS * Math.sin(rad)) + 'px');
+    });
+    updateEraserActiveStates();
+  } else {
+    // Pen/highlighter level2: show color/width ring
+    palette.classList.remove('rp-eraser-l2');
+    const outerItems = document.querySelectorAll('.rp-ring-outer .rp-item');
+    const count = outerItems.length;
+    const spacing = 20;
+    const startAngle = toolAngle - (count - 1) * spacing / 2;
+    outerItems.forEach((item, i) => {
+      const deg = startAngle + i * spacing;
+      const rad = (deg - 90) * Math.PI / 180;
+      item.style.setProperty('--rp-x', (RP_OUTER_RADIUS * Math.cos(rad)) + 'px');
+      item.style.setProperty('--rp-y', (RP_OUTER_RADIUS * Math.sin(rad)) + 'px');
+    });
+  }
+  setPaletteLevel(2);
+}
+
+function updateEraserActiveStates() {
+  document.querySelectorAll('.rp-eraser-opt').forEach(b => {
+    const mode = b.dataset.rpEraser;
+    const size = b.dataset.rpEsize;
+    if (mode === 'stroke') {
+      b.classList.toggle('rp-active', STATE.eraserMode === 'stroke');
+    } else {
+      b.classList.toggle('rp-active', STATE.eraserMode === 'pixel' && String(STATE.pixelEraserSize) === size);
+    }
+  });
+}
+
+function applyPalettePos(pos) {
+  const p = document.querySelector('#radial-palette');
+  if (!p) return;
+  p.style.left = pos.x + 'px';
+  p.style.top = pos.y + 'px';
+}
+
+function clampPalettePos(x, y) {
+  const rect = document.querySelector('#slide-container').getBoundingClientRect();
+  const m = 35;
+  return { x: Math.max(m, Math.min(rect.width - m, x)), y: Math.max(m, Math.min(rect.height - m, y)) };
+}
+
+function savePalettePos(pos) {
+  try { localStorage.setItem(RP_PALETTE_KEY, JSON.stringify(pos)); } catch(e) {}
+}
+
+function loadPalettePos() {
+  try {
+    const r = localStorage.getItem(RP_PALETTE_KEY);
+    if (!r) return null;
+    const p = JSON.parse(r);
+    if (typeof p.x === 'number' && typeof p.y === 'number') return p;
+  } catch(e) {}
+  return null;
+}
+
+function setupPaletteEvents() {
+  const hub = document.querySelector('#rp-hub');
+  const palette = document.querySelector('#radial-palette');
+  const cvs = document.querySelector('#drawing-canvas');
+  if (!hub || !palette) return;
+  let drag = null;
+
+  hub.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    hub.setPointerCapture(e.pointerId);
+    drag = { sx: e.clientX, sy: e.clientY, px: STATE.palettePos.x, py: STATE.palettePos.y, moving: false, id: e.pointerId };
+  });
+
+  hub.addEventListener('pointermove', e => {
+    if (!drag) return;
+    e.preventDefault();
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.moving && Math.sqrt(dx*dx + dy*dy) > RP_DRAG_THRESHOLD) {
+      drag.moving = true;
+      palette.classList.add('rp-dragging');
+      if (STATE.paletteLevel > 0) collapsePalette();
+    }
+    if (drag.moving) {
+      const c = clampPalettePos(drag.px + dx, drag.py + dy);
+      STATE.palettePos = c;
+      applyPalettePos(c);
+    }
+  });
+
+  hub.addEventListener('pointerup', e => {
+    if (!drag) return;
+    e.preventDefault();
+    if (drag.moving) {
+      savePalettePos(STATE.palettePos);
+      palette.classList.remove('rp-dragging');
+    } else {
+      togglePalette();
+    }
+    hub.releasePointerCapture(drag.id);
+    drag = null;
+  });
+
+  hub.addEventListener('pointercancel', e => {
+    if (!drag) return;
+    palette.classList.remove('rp-dragging');
+    hub.releasePointerCapture(drag.id);
+    drag = null;
+  });
+
+  // Tool selection (inner ring)
+  document.querySelectorAll('.rp-tool').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const t = btn.dataset.rpTool;
+
+      if (t === 'pen' || t === 'highlighter') {
+        // If already in level2 for this tool, collapse
+        if (STATE.paletteLevel === 2 && btn.classList.contains('rp-selected')) {
+          collapsePalette();
+          return;
+        }
+        setTool(t);
+        updatePaletteHub();
+        updatePaletteActiveStates();
+        enterLevel2(t);
+      } else if (t === 'eraser') {
+        // If already in level2 for eraser, collapse
+        if (STATE.paletteLevel === 2 && btn.classList.contains('rp-selected')) {
+          collapsePalette();
+          return;
+        }
+        setTool(t);
+        updatePaletteHub();
+        updatePaletteActiveStates();
+        enterLevel2(t);
+      } else if (t === 'sidepanel') {
+        // Toggle side panel
+        const panel = document.querySelector('#side-panel');
+        if (panel) panel.classList.toggle('open');
+        setTimeout(collapsePalette, 200);
+      }
+    });
+  });
+
+  // Color selection (outer ring)
+  document.querySelectorAll('.rp-color').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      setColor(btn.dataset.rpColor);
+      updatePaletteHub();
+      updatePaletteActiveStates();
+      setTimeout(collapsePalette, 150);
+    });
+  });
+
+  // Width selection (outer ring)
+  document.querySelectorAll('.rp-width').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      setPenWidth(btn.dataset.rpWidth);
+      updatePaletteActiveStates();
+      setTimeout(collapsePalette, 150);
+    });
+  });
+
+  // Eraser mode selection (eraser sub-ring)
+  document.querySelectorAll('.rp-eraser-opt').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const mode = btn.dataset.rpEraser;
+      if (mode === 'stroke') {
+        STATE.eraserMode = 'stroke';
+      } else {
+        STATE.eraserMode = 'pixel';
+        STATE.pixelEraserSize = parseInt(btn.dataset.rpEsize) || 24;
+      }
+      setTool('eraser');
+      updatePaletteHub();
+      updateEraserActiveStates();
+      setTimeout(collapsePalette, 200);
+    });
+  });
+
+  // Auto-collapse on outside tap
+  document.addEventListener('pointerdown', e => {
+    if (STATE.paletteLevel === 0) return;
+    if (palette.contains(e.target)) return;
+    collapsePalette();
+  }, true);
+
+  // Auto-collapse when drawing starts
+  if (cvs) cvs.addEventListener('pointerdown', () => { if (STATE.paletteLevel > 0) collapsePalette(); });
+
+  // Re-clamp on resize
+  new ResizeObserver(() => {
+    if (STATE.palettePos) {
+      STATE.palettePos = clampPalettePos(STATE.palettePos.x, STATE.palettePos.y);
+      applyPalettePos(STATE.palettePos);
+    }
+  }).observe(document.querySelector('#slide-container'));
+}
 
 // ===== DOM REFS =====
 const $ = (s) => document.querySelector(s);
@@ -802,11 +1271,13 @@ function init() {
   slideContainer.style.fontSize = STATE.fontSize + 'px';
 
   renderAllSlides();
-  initPassageReveals();
+
   renderPanel();
   updateUI();
   setupCanvas();
   setupEvents();
+  initPalette();
+  setupPaletteEvents();
 
   $('#lesson-title-bar').textContent = STATE.lesson.title || '';
   $('#status-lesson').textContent = STATE.lesson.title || '';
@@ -857,17 +1328,7 @@ const RENDERERS = {
   passage(el, data, idx) {
     let html = `<div class="slide-header">${esc(data.title || 'Passage')}</div>`;
     let content = data.content || '';
-    const sortedReveals = [...(data.reveals || [])].sort((a, b) => a.start - b.start);
-    let result = '';
-    let lastEnd = 0;
-    sortedReveals.forEach((r, ri) => {
-      result += wrapSentences(esc(content.slice(lastEnd, r.start)));
-      result += `<span class="reveal-target" data-reveal-idx="${ri}" data-slide="${idx}">` +
-        `<span class="reveal-label">${esc(r.label || '')}</span>` +
-        wrapSentences(esc(content.slice(r.start, r.end))) + `</span>`;
-      lastEnd = r.end;
-    });
-    result += wrapSentences(esc(content.slice(lastEnd)));
+    let result = wrapSentences(esc(content));
 
     let vocabHtml = '';
     if (data.vocabulary && data.vocabulary.length) {
@@ -1013,37 +1474,41 @@ function goToSlide(index) {
 function nextSlide() { goToSlide(STATE.currentSlide + 1); }
 function prevSlide() { goToSlide(STATE.currentSlide - 1); }
 
-// ===== REVEAL =====
-// 초기화: 첫 2개 reveal target만 자동 공개, 예시 등 나머지는 블러
-function initPassageReveals() {
-  STATE.lesson.slides.forEach((data, idx) => {
-    if (data.type !== 'passage') return;
-    const targets = slideTrack.querySelectorAll(`.reveal-target[data-slide="${idx}"]`);
-    if (targets.length === 0) return;
-    // 첫 2개만 공개 (예시 부분 포함 나머지는 블러 유지)
-    for (let i = 0; i < Math.min(2, targets.length); i++) {
-      targets[i].classList.add('revealed');
-    }
-  });
-}
-
-function revealNext() {
+// ===== 2-F TOGGLE =====
+// 첫 2문장 + 마지막 1문장만 표시, 나머지 숨김 토글
+function toggle2F() {
   const idx = STATE.currentSlide;
-  const targets = slideTrack.querySelectorAll(`.reveal-target[data-slide="${idx}"]`);
-  // 아직 공개 안 된 다음 타겟을 찾아서 공개
-  for (let i = 0; i < targets.length; i++) {
-    if (!targets[i].classList.contains('revealed')) {
-      targets[i].classList.add('revealed');
-      return;
+  const data = STATE.lesson.slides[idx];
+  if (!data || data.type !== 'passage') return;
+  const slideEl = slideTrack.querySelector(`.slide[data-index="${idx}"]`);
+  if (!slideEl) return;
+  const passageText = slideEl.querySelector('.passage-text');
+  if (!passageText) return;
+  const sentences = passageText.querySelectorAll('.sentence');
+  if (sentences.length <= 3) return; // 3문장 이하면 토글 불필요
+
+  // 현재 상태 확인: 이미 숨김 중인지
+  const isHidden = passageText.querySelector('.twoF-hidden');
+  // 기존 ellipsis 제거
+  passageText.querySelectorAll('.twoF-ellipsis').forEach(el => el.remove());
+
+  if (isHidden) {
+    // 복원: 모든 문장 다시 보이기
+    sentences.forEach(s => s.classList.remove('twoF-hidden'));
+    STATE.twoFActive = false;
+  } else {
+    // 숨기기: 첫 2문장 + 마지막 1문장만 남기고 나머지 숨김
+    const last = sentences.length - 1;
+    for (let i = 2; i < last; i++) {
+      sentences[i].classList.add('twoF-hidden');
     }
+    // 생략 표시 삽입 (두 번째 문장 뒤)
+    const ellipsis = document.createElement('span');
+    ellipsis.className = 'twoF-ellipsis';
+    ellipsis.textContent = ' [...] ';
+    sentences[1].after(ellipsis);
+    STATE.twoFActive = true;
   }
-}
-
-// 2-F 버튼: 블러된 중간 부분 전체 공개
-function revealMiddle() {
-  const idx = STATE.currentSlide;
-  const targets = slideTrack.querySelectorAll(`.reveal-target[data-slide="${idx}"]:not(.revealed)`);
-  targets.forEach(t => t.classList.add('revealed'));
 }
 
 // ===== PASSAGE NOTES RESIZE =====
@@ -1063,15 +1528,25 @@ function startResize(e) {
   const notes = split.querySelector('.passage-notes');
   const startX = e.clientX;
   const startWidth = notes.offsetWidth;
+  const maxW = split.offsetWidth * 0.6;
+  let pendingW = startWidth;
+  let rafId = 0;
+  notes.style.willChange = 'width';
 
+  function applyWidth() {
+    rafId = 0;
+    notes.style.width = pendingW + 'px';
+  }
   function onMove(ev) {
     ev.preventDefault();
     const delta = startX - ev.clientX;
-    const newW = Math.max(180, Math.min(split.offsetWidth * 0.6, startWidth + delta));
-    notes.style.width = newW + 'px';
+    pendingW = Math.max(180, Math.min(maxW, startWidth + delta));
+    if (!rafId) rafId = requestAnimationFrame(applyWidth);
   }
   function onUp() {
     handle.classList.remove('dragging');
+    notes.style.willChange = '';
+    if (rafId) { cancelAnimationFrame(rafId); applyWidth(); }
     document.removeEventListener('pointermove', onMove);
     document.removeEventListener('pointerup', onUp);
   }
@@ -1094,11 +1569,6 @@ function restoreNotes() {
   });
 }
 
-function revealAll() {
-  const idx = STATE.currentSlide;
-  const targets = slideTrack.querySelectorAll(`.reveal-target[data-slide="${idx}"]`);
-  targets.forEach(t => t.classList.add('revealed'));
-}
 
 // ===== DRAWING ENGINE =====
 function setupCanvas() {
@@ -1129,7 +1599,19 @@ function onPointerDown(e) {
   const pos = getPointerPos(e);
 
   if (STATE.drawingMode === 'eraser') {
-    handleEraser(pos.x, pos.y);
+    STATE.isErasing = true;
+    if (STATE.eraserMode === 'stroke') {
+      handleEraser(pos.x, pos.y);
+    } else {
+      // Pixel eraser: start eraser stroke
+      STATE.currentStroke = {
+        points: [pos],
+        color: '#000000',
+        width: STATE.pixelEraserSize,
+        tool: 'pixelEraser',
+        slideIndex: STATE.currentSlide
+      };
+    }
     return;
   }
 
@@ -1137,9 +1619,9 @@ function onPointerDown(e) {
   if (STATE.drawingMode === 'highlighter') {
     const hitEl = hitTestThrough(e.clientX, e.clientY);
     if (hitEl) {
-      const rt = hitEl.closest('.reveal-target.revealed');
-      if (rt) {
-        rt.classList.add('text-hl');
+      const sent = hitEl.closest('.sentence');
+      if (sent) {
+        sent.classList.add('text-hl');
         STATE.textHighlighting = true;
         return;
       }
@@ -1163,13 +1645,28 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
-  // Text-following highlighter: highlight reveal targets as pointer drags over them
+  // Eraser drag
+  if (STATE.isErasing && STATE.drawingMode === 'eraser') {
+    e.preventDefault();
+    const pos = getPointerPos(e);
+    if (STATE.eraserMode === 'stroke') {
+      handleEraser(pos.x, pos.y);
+    } else if (STATE.currentStroke) {
+      STATE.currentStroke.points.push(pos);
+      const pts = STATE.currentStroke.points;
+      if (pts.length >= 2) {
+        drawSegment(pts[pts.length - 2], pts[pts.length - 1], STATE.currentStroke);
+      }
+    }
+    return;
+  }
+  // Text-following highlighter: highlight sentences as pointer drags over them
   if (STATE.textHighlighting && STATE.drawingMode === 'highlighter') {
     e.preventDefault();
     const hitEl = hitTestThrough(e.clientX, e.clientY);
     if (hitEl) {
-      const rt = hitEl.closest('.reveal-target.revealed');
-      if (rt) rt.classList.add('text-hl');
+      const sent = hitEl.closest('.sentence');
+      if (sent) sent.classList.add('text-hl');
     }
     return;
   }
@@ -1184,6 +1681,18 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+  // Eraser end
+  if (STATE.isErasing) {
+    STATE.isErasing = false;
+    if (STATE.eraserMode === 'pixel' && STATE.currentStroke && STATE.currentStroke.points.length > 1) {
+      const idx = STATE.currentSlide;
+      if (!STATE.slideDrawings[idx]) STATE.slideDrawings[idx] = [];
+      STATE.slideDrawings[idx].push(STATE.currentStroke);
+      STATE.undoStack[idx] = [];
+    }
+    STATE.currentStroke = null;
+    return;
+  }
   if (STATE.textHighlighting) { STATE.textHighlighting = false; return; }
   if (!STATE.isDrawing) return;
   STATE.isDrawing = false;
@@ -1196,7 +1705,12 @@ function onPointerUp(e) {
 
 function drawSegment(from, to, stroke) {
   ctx.save();
-  if (stroke.tool === 'highlighter') {
+  if (stroke.tool === 'pixelEraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.globalAlpha = 1.0;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  } else if (stroke.tool === 'highlighter') {
     ctx.globalAlpha = 0.25;
     ctx.lineCap = 'square';
     ctx.lineJoin = 'miter';
@@ -1281,23 +1795,30 @@ function setTool(tool) {
     return;
   }
   STATE.drawingMode = tool;
-  canvas.className = tool === 'navigate' ? 'mode-navigate' : (tool === 'eraser' ? 'mode-eraser' : '');
+  if (tool === 'eraser') {
+    canvas.className = STATE.eraserMode === 'pixel' ? 'mode-eraser-pixel' : 'mode-eraser';
+  } else {
+    canvas.className = tool === 'navigate' ? 'mode-navigate' : '';
+  }
 
   $$('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  updatePaletteHub();
+  updatePaletteActiveStates();
   updateUI();
 }
 
 function setColor(color) {
   STATE.penColor = color;
-  $$('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === color));
   if (STATE.drawingMode === 'navigate' || STATE.drawingMode === 'eraser') {
     setTool('pen');
   }
+  updatePaletteHub();
+  updatePaletteActiveStates();
 }
 
 function setPenWidth(w) {
   STATE.penWidth = parseInt(w);
-  $$('.width-btn').forEach(b => b.classList.toggle('active', b.dataset.width === String(w)));
+  updatePaletteActiveStates();
 }
 
 // ===== BACKGROUND & FONT =====
@@ -1375,16 +1896,13 @@ function setupEvents() {
 
   // Toolbar buttons
   $$('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-  $$('.color-dot').forEach(d => d.addEventListener('click', () => setColor(d.dataset.color)));
-  $$('.width-btn').forEach(b => b.addEventListener('click', () => setPenWidth(b.dataset.width)));
 
   $('#btn-prev').addEventListener('click', prevSlide);
   $('#btn-next').addEventListener('click', nextSlide);
   $('#btn-font-up').addEventListener('click', () => adjustFontSize(2));
   $('#btn-font-down').addEventListener('click', () => adjustFontSize(-2));
   $('#btn-bg').addEventListener('click', cycleBackground);
-  $('#btn-reveal').addEventListener('click', revealNext);
-  $('#btn-reveal-middle').addEventListener('click', revealMiddle);
+  $('#btn-twoF').addEventListener('click', toggle2F);
   $('#btn-panel').addEventListener('click', togglePanel);
   $('#btn-fullscreen').addEventListener('click', toggleFullscreen);
   $('#panel-close-btn').addEventListener('click', togglePanel);
@@ -1401,28 +1919,13 @@ function setupEvents() {
   toolbar.addEventListener('touchstart', resetToolbarTimer, { passive: true });
   slideContainer.addEventListener('mousemove', resetToolbarTimer);
 
-  // Passage click: sentence underline + reveal highlight
+  // Passage click: sentence underline + text highlight
   slideTrack.addEventListener('click', (e) => {
     if (STATE.drawingMode !== 'navigate') return;
-    // Sentence click-to-underline (works on revealed text)
     const sent = e.target.closest('.sentence');
     if (sent) {
-      const parentRt = sent.closest('.reveal-target');
-      if (!parentRt || parentRt.classList.contains('revealed')) {
-        sent.classList.toggle('sentence-active');
-        e.stopPropagation();
-        return;
-      }
-    }
-    // Reveal target click
-    const rt = e.target.closest('.reveal-target');
-    if (!rt) return;
-    if (STATE.lesson.settings && STATE.lesson.settings.revealMode === 'individual') {
-      rt.classList.toggle('revealed');
-      return;
-    }
-    if (rt.classList.contains('revealed')) {
-      rt.classList.toggle('text-hl');
+      sent.classList.toggle('sentence-active');
+      e.stopPropagation();
     }
   });
 
@@ -1459,13 +1962,9 @@ function handleKey(e) {
     e.preventDefault(); prevSlide(); resetToolbarTimer(); return;
   }
 
-  // Reveal
-  if (key === 'r' || key === 'R') {
-    if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); revealNext(); return; }
-  }
-  // Reveal all
-  if (key === 'a' || key === 'A') {
-    if (e.shiftKey && !e.ctrlKey) { e.preventDefault(); revealAll(); return; }
+  // 2-F toggle
+  if (key === 'f' || key === 'F') {
+    if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); toggle2F(); return; }
   }
 
   // Background
@@ -1487,8 +1986,14 @@ function handleKey(e) {
     return;
   }
 
+  // Palette toggle
+  if ((key === 'p' || key === 'P') && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); togglePalette(); return;
+  }
+
   // Escape
   if (key === 'Escape') {
+    if (STATE.paletteLevel > 0) { collapsePalette(); return; }
     if ($('#lesson-modal').classList.contains('open')) { closeLessonModal(); return; }
     if (STATE.panelOpen) { togglePanel(); return; }
     if (STATE.drawingMode !== 'navigate') { setTool('navigate'); return; }
@@ -1578,14 +2083,14 @@ function loadLessonData(data) {
   STATE.currentSlide = 0;
   STATE.slideDrawings = {};
   STATE.undoStack = {};
-  STATE.revealState = {};
+  STATE.twoFActive = false;
   Object.keys(notesStore).forEach(k => delete notesStore[k]);
   // Close side panel if open
   if (STATE.panelOpen) { sidePanel.classList.remove('open'); STATE.panelOpen = false; }
   applyBackground();
   slideContainer.style.fontSize = STATE.fontSize + 'px';
   renderAllSlides();
-  initPassageReveals();
+
   renderPanel();
   setupCanvas();
   initPassageResize();
