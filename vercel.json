@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/whiteboard_drive.html" }
+    { "source": "/", "destination": "/index.html" }
   ],
   "headers": [
     {
