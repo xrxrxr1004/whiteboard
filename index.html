@@ -362,6 +362,15 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .theme-dark .panel-tab:hover { background: #141420; color: #e0e0e0; }
 .theme-dark .panel-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
 
+/* ===== PANEL CONTENT ===== */
+.panel-empty { text-align: center; color: var(--text-muted); padding: 32px 16px; font-size: 13px; }
+.translation-ko { font-size: 14px; line-height: 1.9; color: var(--text-primary); }
+.summary-block { padding: 16px; }
+.summary-topic { font-size: 14px; font-weight: 700; color: var(--text-primary); padding: 10px 14px; background: var(--surface-muted); border-left: 3px solid var(--purple); border-radius: 4px; margin-bottom: 12px; }
+.summary-points { margin: 0; padding-left: 20px; }
+.summary-points li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
+.theme-dark .summary-topic { background: #141420; border-left-color: #a78bfa; color: #e0e0e0; }
+
 /* ===== STATUS BAR ===== */
 #status-bar {
   height: var(--status-height); background: var(--toolbar-bg); color: var(--text-muted);
@@ -1470,7 +1479,6 @@ function renderPanel() {
     }
     let html = '';
     resources.forEach(r => {
-      if (r.label) html += `<div class="panel-section-title">${esc(r.label)}</div>`;
       (r.items || []).forEach(v => {
         html += `<div class="panel-vocab-item"><span class="panel-vocab-word">${esc(v.word)}</span><span class="panel-vocab-meaning">${esc(v.meaning)}</span></div>`;
       });
@@ -1478,27 +1486,25 @@ function renderPanel() {
     body.innerHTML = html;
 
   } else if (tab === 'translation') {
-    body.innerHTML = STATE.lesson.translation ||
-      `<p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">[더미 데이터]</p>
-       <p style="font-size:14px;line-height:1.9;color:var(--slide-text)">
-         도시 재생 사업은 오래된 도시 지역에 새로운 생명을 불어넣는 과정이다. 단순히 낡은 건물을 허물고 새 건물을 세우는 것이 아니라, 지역 사회의 역사적 특성과 문화적 정체성을 보존하면서 현대적 기능을 더하는 균형 잡힌 접근이 필요하다.
-       </p>
-       <p style="font-size:14px;line-height:1.9;color:var(--slide-text);margin-top:12px">
-         성공적인 사례로는 기존 골목과 건물의 외형을 유지하면서 내부를 현대적으로 리모델링한 경우를 들 수 있다. 이러한 방식은 지역의 고유한 분위기를 살리면서도 실용성을 높이는 데 효과적이다.
-       </p>`;
+    const pairs = STATE.lesson.translation;
+    if (!pairs || !pairs.length) {
+      body.innerHTML = '<p class="panel-empty">번역 데이터 없음</p>';
+      return;
+    }
+    body.innerHTML = `<div class="translation-ko">${esc(pairs.map(p => p.ko).join(' '))}</div>`;
 
   } else if (tab === 'summary') {
-    body.innerHTML = STATE.lesson.summary ||
-      `<p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">[더미 데이터]</p>
-       <div style="font-size:13px;line-height:1.8">
-         <div class="panel-section-title">주제</div>
-         <p style="color:var(--slide-text);margin-bottom:16px">도시 재생에서 역사적 정체성 보존의 중요성</p>
-         <div class="panel-section-title">핵심 흐름</div>
-         <ul style="padding-left:18px;color:var(--text-secondary);display:flex;flex-direction:column;gap:8px">
-           <li>단순 철거·재건축 vs. 보존·현대화의 균형</li>
-           <li>성공 사례: 기존 외형 유지 + 내부 리모델링</li>
-           <li>지역 고유 분위기 보존 = 장기적 가치 창출</li>
-         </ul>
+    const s = STATE.lesson.summary;
+    if (!s) {
+      body.innerHTML = '<p class="panel-empty">내용 정리 데이터 없음</p>';
+      return;
+    }
+    body.innerHTML =
+      `<div class="summary-block">
+         <div class="summary-topic">${esc(s.topic)}</div>
+         <ul class="summary-points">${
+           (s.points || []).map(pt => `<li>${esc(pt)}</li>`).join('')
+         }</ul>
        </div>`;
   }
 }
