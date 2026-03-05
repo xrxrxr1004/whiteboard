@@ -516,6 +516,31 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .lm-list-btn.delete:hover { background: #fee2e2; color: #dc2626; }
 .lm-empty { text-align: center; padding: 40px 20px; color: var(--text-muted, #94a3b8); font-size: 14px; }
 
+/* ===== CLEAR PAGE CONFIRM MODAL ===== */
+#cp-modal {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
+}
+#cp-modal.open { display: flex; }
+.cp-dialog {
+  background: var(--surface, #fff); color: var(--slide-text, #0f172a);
+  border-radius: 14px; width: 340px; max-width: 90vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  padding: 24px 24px 20px; display: flex; flex-direction: column; gap: 10px;
+}
+.cp-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.cp-desc { font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.6; }
+.cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.cp-btn {
+  padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+}
+.cp-btn-cancel { background: var(--surface-muted, #f1f5f9); color: var(--text-secondary, #475569); }
+.cp-btn-cancel:hover { background: var(--border, #e2e8f0); }
+.cp-btn-danger { background: #dc2626; color: #fff; }
+.cp-btn-danger:hover { filter: brightness(1.1); }
+
 /* ===== SORT BAR & MULTI-SELECT ===== */
 .lm-sort-bar {
   display: flex; align-items: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
@@ -805,6 +830,9 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       <button class="tool-btn" id="btn-fullscreen" title="전체화면 (F11)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
+      <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기" style="color:#ef4444">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
       <button class="tool-btn" id="btn-lesson-mgr" title="수업 관리 (L)" style="font-size:15px">📚</button>
     </div>
     <div id="lesson-nav-wrap">
@@ -979,6 +1007,21 @@ window.LESSON_DATA = {
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
+</div>
+
+<!-- CLEAR PAGE CONFIRM MODAL -->
+<div id="cp-modal">
+  <div class="cp-dialog">
+    <div class="cp-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" width="18" height="18"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      현재 슬라이드 지우기
+    </div>
+    <div class="cp-desc">이 슬라이드의 모든 필기·밑줄이 삭제됩니다.<br>이 작업은 되돌릴 수 없습니다.</div>
+    <div class="cp-actions">
+      <button class="cp-btn cp-btn-cancel" id="cp-cancel">취소</button>
+      <button class="cp-btn cp-btn-danger" id="cp-confirm">지우기</button>
+    </div>
+  </div>
 </div>
 
 <!-- LESSON LIBRARY: 수업 파일들 (lessons/ 폴더의 .js 파일 추가) -->
@@ -2188,6 +2231,7 @@ function handleKey(e) {
   // Escape
   if (key === 'Escape') {
     if (STATE.paletteLevel > 0) { collapsePalette(); return; }
+    if ($('#cp-modal').classList.contains('open')) { closeClearPageModal(); return; }
     if ($('#lesson-modal').classList.contains('open')) { closeLessonModal(); return; }
     if (STATE.panelOpen) { togglePanel(); return; }
     if (STATE.drawingMode !== 'navigate') { setTool('navigate'); return; }
@@ -2316,6 +2360,21 @@ function openLessonModal() {
 function closeLessonModal() {
   $('#lesson-modal').classList.remove('open');
 }
+
+// ===== CLEAR PAGE =====
+function clearPage() {
+  const idx = STATE.currentSlide;
+  STATE.slideDrawings[idx] = [];
+  STATE.undoStack[idx] = [];
+  redrawCanvas(idx);
+  const slideEl = slideTrack.children[idx];
+  if (slideEl) {
+    slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
+    slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
+  }
+}
+function openClearPageModal() { $('#cp-modal').classList.add('open'); }
+function closeClearPageModal() { $('#cp-modal').classList.remove('open'); }
 
 function activateLmTab(tab) {
   $$('.lm-tab').forEach(t => t.classList.toggle('active', t.dataset.lmTab === tab));
@@ -2773,6 +2832,11 @@ if (!loadSavedOnStartup()) {
 }
 init();
 setupLessonManager();
+// Clear page
+$('#btn-clear-page').addEventListener('click', openClearPageModal);
+$('#cp-cancel').addEventListener('click', closeClearPageModal);
+$('#cp-confirm').addEventListener('click', () => { clearPage(); closeClearPageModal(); });
+$('#cp-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeClearPageModal(); });
 </script>
 </body>
 </html>
