@@ -2061,18 +2061,20 @@ function setupEvents() {
     renderPanel();
   }));
 
-  // ── 사이드 패널 너비 조절 ──
-  (() => {
+  // ── 사이드 패널 너비 조절 (최초 init() 1회만 등록) ──
+  if (!window._panelResizeSetup) {
+    window._panelResizeSetup = true;
     const handle = $('#panel-resize-handle');
     const panel  = $('#side-panel');
     const MIN_W  = 240, MAX_W = 560;
-    let startX = 0, startW = 0;
+    let startX = 0, startW = 0, dragging = false;
 
-    // 저장된 너비 복원
+    // 저장된 너비 복원 (페이지 로드 시 1회)
     const saved = localStorage.getItem('wb-panel-width');
     if (saved) document.documentElement.style.setProperty('--panel-width', saved);
 
     handle.addEventListener('pointerdown', e => {
+      dragging = true;
       startX = e.clientX;
       startW = panel.getBoundingClientRect().width;
       handle.setPointerCapture(e.pointerId);
@@ -2082,20 +2084,22 @@ function setupEvents() {
       e.preventDefault();
     });
     handle.addEventListener('pointermove', e => {
-      if (!handle.hasPointerCapture(e.pointerId)) return;
+      if (!dragging) return;
       const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
-      document.documentElement.style.setProperty('--panel-width', w + 'px');
+      document.documentElement.style.setProperty('--panel-width', Math.round(w) + 'px');
     });
-    handle.addEventListener('pointerup', e => {
-      if (!handle.hasPointerCapture(e.pointerId)) return;
-      handle.releasePointerCapture(e.pointerId);
+    const endDrag = e => {
+      if (!dragging) return;
+      dragging = false;
       handle.classList.remove('dragging');
       panel.classList.remove('resizing');
       document.body.classList.remove('panel-resizing');
       const w = getComputedStyle(document.documentElement).getPropertyValue('--panel-width').trim();
       localStorage.setItem('wb-panel-width', w);
-    });
-  })();
+    };
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+  }
 
   // Nav touch zones
   $('#nav-prev').addEventListener('click', prevSlide);
