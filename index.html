@@ -378,27 +378,38 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .panel-empty { text-align: center; color: var(--text-muted); padding: 32px 16px; font-size: 13px; }
 .translation-ko { font-size: 14px; line-height: 1.9; color: var(--text-primary); }
 .summary-block { padding: 0; }
-.summary-title-ko { font-size: 14px; font-weight: 700; line-height: 1.6; color: var(--text-primary); padding: 10px 14px; background: var(--surface-muted); border-left: 3px solid var(--purple); border-radius: 0 6px 6px 0; margin-bottom: 14px; }
-.summary-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
-.summary-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; }
-.summary-flow-step { font-size: 12px; padding: 3px 8px; border-radius: 12px; background: var(--surface-muted); color: var(--text-secondary); white-space: nowrap; }
-.summary-flow-arrow { color: var(--text-muted); font-size: 12px; }
-.summary-points { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-.summary-point-row { display: flex; align-items: baseline; gap: 8px; }
-.summary-point-label { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
-.summary-point-label[data-pos="0"] { background: #f1f5f9; color: #475569; }
-.summary-point-label[data-pos="1"] { background: #ede9fe; color: #6d28d9; }
-.summary-point-label[data-pos="2"] { background: #f0fdfa; color: #0d9488; }
-.summary-point-label[data-pos="3"] { background: #fff7ed; color: #d97706; }
+/* 헤더: 영어 제목 + 한국어 주제문 */
+.summary-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.summary-title-en { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+.summary-title-ko { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+/* 논리 흐름: 단일 회색 바 */
+.summary-flow-bar { background: var(--surface-muted); border-radius: 8px; padding: 7px 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+/* 핵심 포인트: 테이블형 (텍스트 라벨 + 행 구분선) */
+.summary-points { display: flex; flex-direction: column; margin-bottom: 12px; }
+.summary-point-row { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--surface-muted); }
+.summary-point-row:last-child { border-bottom: none; }
+.summary-point-label { font-size: 11px; font-weight: 700; min-width: 28px; flex-shrink: 0; white-space: nowrap; }
+.summary-point-label[data-pos="0"] { color: #475569; }
+.summary-point-label[data-pos="1"] { color: #6d28d9; }
+.summary-point-label[data-pos="2"] { color: #0d9488; }
+.summary-point-label[data-pos="3"] { color: #d97706; }
 .summary-point-text { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
-.summary-quote { border-left: 3px solid var(--purple); padding: 8px 12px; background: var(--surface-muted); border-radius: 0 6px 6px 0; }
+/* 핵심 문장 */
+.summary-quote { border-left: 3px solid var(--purple); padding: 8px 12px; background: var(--surface-muted); border-radius: 0 6px 6px 0; margin-bottom: 12px; }
 .summary-quote-text { font-size: 12.5px; font-style: italic; color: var(--text-secondary); line-height: 1.6; }
-.theme-dark .summary-title-ko { background: #141420; border-left-color: #a78bfa; color: #e0e0e0; }
-.theme-dark .summary-point-label[data-pos="0"] { background: #1e293b; color: #94a3b8; }
-.theme-dark .summary-point-label[data-pos="1"] { background: #2e1065; color: #c4b5fd; }
-.theme-dark .summary-point-label[data-pos="2"] { background: #042f2e; color: #5eead4; }
-.theme-dark .summary-point-label[data-pos="3"] { background: #431407; color: #fdba74; }
+/* 하단 어휘 인라인 */
+.summary-vocab-inline { font-size: 12px; color: var(--text-muted); padding-top: 10px; border-top: 1px solid var(--surface-muted); line-height: 1.8; }
+.summary-vocab-inline .sv { font-weight: 600; color: var(--text-secondary); }
+/* 다크 모드 */
+.theme-dark .summary-title-ko { color: #9e9eb8; }
+.theme-dark .summary-flow-bar { background: #141420; color: #9e9eb8; }
+.theme-dark .summary-point-row { border-bottom-color: #141420; }
+.theme-dark .summary-point-label[data-pos="0"] { color: #94a3b8; }
+.theme-dark .summary-point-label[data-pos="1"] { color: #c4b5fd; }
+.theme-dark .summary-point-label[data-pos="2"] { color: #5eead4; }
+.theme-dark .summary-point-label[data-pos="3"] { color: #fdba74; }
 .theme-dark .summary-quote { background: #141420; }
+.theme-dark .summary-vocab-inline { border-top-color: #141420; }
 
 /* ===== STATUS BAR ===== */
 #status-bar {
@@ -1528,33 +1539,40 @@ function renderPanel() {
       body.innerHTML = '<p class="panel-empty">내용 정리 데이터 없음</p>';
       return;
     }
-    if (s.title_ko || s.flow) {
-      // 새 포맷: title_ko + flow + points[{label,text}] + quote
-      const flowHtml = (s.flow || []).map((step, i) =>
-        (i > 0 ? '<span class="summary-flow-arrow">→</span>' : '') +
-        `<span class="summary-flow-step">${esc(step)}</span>`
-      ).join('');
-      const pointsHtml = (s.points || []).map((pt, i) => {
-        const label = (typeof pt === 'object') ? (pt.label || '') : '';
-        const text  = (typeof pt === 'object') ? (pt.text  || '') : pt;
-        return `<div class="summary-point-row">${
-          label ? `<span class="summary-point-label" data-pos="${i}">${esc(label)}</span>` : ''
-        }<span class="summary-point-text">${esc(text)}</span></div>`;
-      }).join('');
-      body.innerHTML = `<div class="summary-block">${
-        s.title_ko ? `<div class="summary-title-ko">${esc(s.title_ko)}</div>` : ''
-      }${flowHtml ? `<div class="summary-section-label">논리 흐름</div><div class="summary-flow">${flowHtml}</div>` : ''
-      }${pointsHtml ? `<div class="summary-section-label">핵심 포인트</div><div class="summary-points">${pointsHtml}</div>` : ''
-      }${s.quote ? `<div class="summary-section-label">핵심 문장</div><div class="summary-quote"><div class="summary-quote-text">❝ ${esc(s.quote)}</div></div>` : ''
-      }</div>`;
-    } else {
-      // 구 포맷 fallback: topic + points[]
-      body.innerHTML = `<div class="summary-block">
-        <div class="summary-title-ko">${esc(s.topic || '')}</div>
-        <div class="summary-points">${
-          (s.points || []).map(pt => `<div class="summary-point-row"><span class="summary-point-text">${esc(pt)}</span></div>`).join('')
-        }</div></div>`;
-    }
+    /* ── 헤더: 영어 제목 + 한국어 주제문 ── */
+    const titleEn = STATE.lesson.title || '';
+    const headerHtml = `<div class="summary-header">${
+      titleEn ? `<div class="summary-title-en">${esc(titleEn)}</div>` : ''
+    }${s.title_ko ? `<div class="summary-title-ko">${esc(s.title_ko)}</div>` : ''
+    }</div>`;
+    /* ── 논리 흐름: 단일 바 ── */
+    const flowHtml = (s.flow && s.flow.length)
+      ? `<div class="summary-flow-bar">${s.flow.map(esc).join(' → ')}</div>`
+      : '';
+    /* ── 핵심 포인트 ── */
+    const pointsHtml = (s.points && s.points.length)
+      ? `<div class="summary-points">${s.points.map((pt, i) => {
+          const label = typeof pt === 'object' ? (pt.label || '') : '';
+          const text  = typeof pt === 'object' ? (pt.text  || '') : pt;
+          return `<div class="summary-point-row">${
+            label ? `<span class="summary-point-label" data-pos="${i}">${esc(label)}</span>` : ''
+          }<span class="summary-point-text">${esc(text)}</span></div>`;
+        }).join('')}</div>`
+      : '';
+    /* ── 핵심 문장 ── */
+    const quoteHtml = s.quote
+      ? `<div class="summary-quote"><div class="summary-quote-text">❝ ${esc(s.quote)}</div></div>`
+      : '';
+    /* ── 하단 어휘 인라인 ── */
+    const vocabItems = (STATE.lesson.resources || [])
+      .filter(r => r.type === 'vocabulary')
+      .flatMap(r => r.items || []);
+    const vocabHtml = vocabItems.length
+      ? `<div class="summary-vocab-inline">${
+          vocabItems.map(v => `<span class="sv">${esc(v.word)}</span> ${esc(v.meaning)}`).join('&ensp;&ensp;')
+        }</div>`
+      : '';
+    body.innerHTML = `<div class="summary-block">${headerHtml}${flowHtml}${pointsHtml}${quoteHtml}${vocabHtml}</div>`;
   }
 }
 
