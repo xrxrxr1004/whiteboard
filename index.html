@@ -126,14 +126,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .lnav-dropdown {
   display: none; position: absolute; right: 0; top: 100%; margin-top: 6px;
   background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-  min-width: 280px; max-height: 420px; overflow-y: auto; z-index: 3000;
+  width: 280px; max-height: 420px; overflow-y: auto; z-index: 3000;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5); padding: 6px;
 }
 .lnav-dropdown.open { display: block; }
-.lnav-group-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b;
-  padding: 8px 12px 4px; font-weight: 700;
+.lnav-search-wrap { padding: 4px 4px 6px; }
+.lnav-search {
+  width: 100%; box-sizing: border-box; background: #0f172a; border: 1px solid #334155;
+  border-radius: 6px; color: #e2e8f0; font-size: 12px; padding: 6px 10px;
+  outline: none; font-family: inherit;
 }
+.lnav-search:focus { border-color: #7c3aed; }
+.lnav-search::placeholder { color: #475569; }
 .lnav-item {
   display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px;
   cursor: pointer; color: #cbd5e1; font-size: 13px; transition: background 0.1s;
@@ -163,7 +167,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .lnav-footer button:hover { background: rgba(124,58,237,0.25); }
 .lnav-rename-btn {
   opacity: 0.3; background: none; border: none; cursor: pointer; padding: 2px 4px;
-  font-size: 12px; color: #64748b; border-radius: 4px; margin-left: 4px;
+  font-size: 12px; color: #64748b; border-radius: 4px; margin-left: auto;
   transition: opacity 0.15s; flex-shrink: 0;
 }
 .lnav-item:hover .lnav-rename-btn { opacity: 1; }
@@ -968,20 +972,26 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
           <div class="lm-label">수업 데이터 붙여넣기</div>
           <textarea class="lm-textarea" id="lm-paste" placeholder='Claude가 만들어준 코드를 여기에 붙여넣으세요.
 
-window.LESSON_DATA = {
-  title: "...",
-  slides: [...]
-};
+;(function(){ window.LESSON_LIBRARY = window.LESSON_LIBRARY || [];
+window.LESSON_LIBRARY.push({
+  "title": "수특독해연습 3강",
+  "exercises": [
+    { "id": "Ex01", "subtitle": "지문 제목", "translation": [...], "summary": {...} }
+  ],
+  "slides": [
+    { "type": "title", ... },
+    { "type": "passage", "exercise_idx": 0, ... },
+    ...
+  ]
+});
+})();
 
-또는 JSON 형식도 됩니다:
-{
-  "title": "...",
-  "slides": [...]
-}'></textarea>
+또는 순수 JSON 형식도 됩니다:
+{ "title": "...", "exercises": [...], "slides": [...] }'></textarea>
           <div class="lm-hint">
-            💡 Claude Cowork에 PDF를 올리고 "양영 화이트보드 JS로 만들어줘"라고 하면 자동 생성됩니다.<br>
-            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK (LESSON_LIBRARY 형식)<br>
-            &nbsp;&nbsp;&nbsp;• <code>window.LESSON_DATA = {...}</code> 형식 OK<br>
+            💡 Claude Code에서 <code>/generate-lesson</code> 명령으로 자동 생성됩니다.<br>
+            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK<br>
+            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 (exercises[] 포함)<br>
             &nbsp;&nbsp;&nbsp;• 순수 JSON <code>{...}</code> 형식 OK
           </div>
           <div class="lm-actions">
@@ -995,7 +1005,7 @@ window.LESSON_DATA = {
             <button class="lm-sort-btn active" data-sort="date-desc">최신순</button>
             <button class="lm-sort-btn" data-sort="date-asc">오래된순</button>
             <button class="lm-sort-btn" data-sort="name-asc">이름순</button>
-            <button class="lm-sort-btn" data-sort="slides-desc">슬라이드 수</button>
+            <button class="lm-sort-btn" data-sort="slides-desc">지문·슬라이드 수</button>
           </div>
           <ul class="lm-list" id="lm-saved-list"></ul>
           <div class="lm-bulk-bar hidden" id="lm-bulk-bar">
@@ -1456,17 +1466,7 @@ const RENDERERS = {
     el.classList.add('slide-title-page');
     const lesson = STATE.lesson;
     const titleText = (lesson && lesson.title) || data.title || '';
-    let subtitle = '';
-    if (lesson && lesson.exercises && lesson.exercises.length > 0) {
-      subtitle = lesson.exercises.map(ex => ex.id || '').filter(Boolean).join(' · ');
-    } else {
-      subtitle = data.subtitle || '';
-    }
-    el.innerHTML = `
-      <h1>${esc(titleText)}</h1>
-      <div class="accent-line"></div>
-      ${subtitle ? `<div class="subtitle">${esc(subtitle)}</div>` : ''}
-    `;
+    el.innerHTML = `<h1>${esc(titleText)}</h1>`;
   },
 
   passage(el, data, idx) {
@@ -2095,6 +2095,7 @@ function resetToolbarTimer() {
   clearTimeout(STATE.toolbarTimer);
   STATE.toolbarTimer = setTimeout(() => {
     if (STATE.drawingMode !== 'navigate') return;
+    if ($('#lesson-nav-dropdown').classList.contains('open')) return;
     toolbar.classList.add('hidden');
     STATE.toolbarVisible = false;
   }, 6000);
@@ -2443,7 +2444,10 @@ function renderSavedList() {
     switch (lmSortMode) {
       case 'date-asc':   return (ia.savedAt || 0) - (ib.savedAt || 0);
       case 'name-asc':   return ((ia.data && ia.data.title) || a).localeCompare((ib.data && ib.data.title) || b, 'ko');
-      case 'slides-desc': return ((ib.data && ib.data.slides && ib.data.slides.length) || 0) - ((ia.data && ia.data.slides && ia.data.slides.length) || 0);
+      case 'slides-desc': {
+        const countOf = d => (d.data && d.data.exercises && d.data.exercises.length) || (d.data && d.data.slides && d.data.slides.length) || 0;
+        return countOf(ib) - countOf(ia);
+      }
       default:           return (ib.savedAt || 0) - (ia.savedAt || 0);
     }
   });
@@ -2453,13 +2457,15 @@ function renderSavedList() {
     const item = store[k];
     const d = item.savedAt ? new Date(item.savedAt) : null;
     const dateStr = d ? `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}` : '';
+    const exercises = (item.data && item.data.exercises && item.data.exercises.length) || 0;
     const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
+    const countStr = exercises > 0 ? `${exercises}개 지문` : `${slides}개 슬라이드`;
     const isCurrent = k === currentId;
     return `<li${isCurrent ? ' style="background:rgba(124,58,237,0.08)"' : ''}>
       <input type="checkbox" class="lm-list-check" data-check-id="${esc(k)}" title="선택">
       <div class="lm-list-info" data-lesson-id="${esc(k)}">
         <div class="lm-list-title">${isCurrent ? '▶ ' : ''}${esc((item.data && item.data.title) || k)}</div>
-        <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${slides}개 슬라이드 · ${dateStr}</div>
+        <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${countStr} · ${dateStr}</div>
       </div>
       <div class="lm-list-actions">
         <button class="lm-list-btn delete" data-delete-id="${esc(k)}" title="삭제">🗑</button>
@@ -2678,39 +2684,15 @@ function buildLnavSubItems(data) {
   return items;
 }
 
-function renderLessonNav() {
-  const dd = $('#lesson-nav-dropdown');
-  const store = getLessonStore();
-  const keys = Object.keys(store).sort((a, b) => (store[a].savedAt || 0) - (store[b].savedAt || 0));
-  const currentId = getCurrentLessonId();
+let lnavSearchQuery = '';
 
-  // Auto-expand current lesson
-  if (currentId) lnavExpanded.add(currentId);
-
-  if (keys.length === 0) {
-    dd.innerHTML = '<div class="lnav-empty">저장된 수업이 없습니다.<br>📚 버튼으로 수업을 추가하세요.</div>';
-    dd.innerHTML += '<div class="lnav-footer"><button id="lnav-manage">📚 수업 관리 열기</button></div>';
-    dd.querySelector('#lnav-manage').addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
-    return;
+function renderLessonNavItems(dd, store, keys, currentId) {
+  let itemsEl = dd.querySelector('.lnav-items');
+  if (!itemsEl) {
+    itemsEl = document.createElement('div');
+    itemsEl.className = 'lnav-items';
+    dd.appendChild(itemsEl);
   }
-
-  // Group by chapter
-  const groups = {};
-  const noGroup = [];
-  keys.forEach(k => {
-    const item = store[k];
-    const title = (item.data && item.data.title) || k;
-    const ch = (item.data && item.data.chapter) || extractChapter(title);
-    if (ch) {
-      if (!groups[ch]) groups[ch] = [];
-      groups[ch].push({ id: k, item });
-    } else {
-      noGroup.push({ id: k, item });
-    }
-  });
-
-  const groupKeys = Object.keys(groups);
-  const showGroups = groupKeys.length > 1 || (groupKeys.length === 1 && noGroup.length > 0);
 
   function renderItem(id, item) {
     const active = id === currentId ? ' active' : '';
@@ -2733,46 +2715,55 @@ function renderLessonNav() {
     }
 
     return `<div class="lnav-item${active}${expandedCls}" data-nav-id="${esc(id)}">
-      <span class="lnav-arrow">▶</span>
+      <span class="lnav-arrow" data-arrow-id="${esc(id)}">▶</span>
       <span class="lnav-item-title">${esc(title)}</span>
       <button class="lnav-rename-btn" data-rename-id="${esc(id)}" title="제목 수정">✏️</button>
     </div>${subHtml}`;
   }
 
-  let html = '';
-  groupKeys.forEach(ch => {
-    if (showGroups) html += `<div class="lnav-group-label">${esc(ch)}</div>`;
-    groups[ch].forEach(({ id, item }) => { html += renderItem(id, item); });
-  });
-  if (noGroup.length) {
-    if (showGroups) html += `<div class="lnav-group-label">기타</div>`;
-    noGroup.forEach(({ id, item }) => { html += renderItem(id, item); });
-  }
-  html += '<div class="lnav-footer"><button id="lnav-manage">📚 수업 관리 열기</button></div>';
-  dd.innerHTML = html;
+  const q = lnavSearchQuery.trim().toLowerCase();
+  const filtered = q
+    ? keys.filter(k => ((store[k].data && store[k].data.title) || k).toLowerCase().includes(q))
+    : keys;
 
-  // Lesson row click: load (if different) or toggle expand
-  dd.querySelectorAll('.lnav-item').forEach(el => {
+  let html = '';
+  if (keys.length === 0) {
+    html = '<div class="lnav-empty">저장된 수업이 없습니다.<br>📚 버튼으로 수업을 추가하세요.</div>';
+  } else {
+    filtered.forEach(k => { html += renderItem(k, store[k]); });
+  }
+  html += '<div class="lnav-footer"><button class="lnav-manage-btn">📚 수업 관리 열기</button></div>';
+  itemsEl.innerHTML = html;
+
+  // Arrow click: toggle only
+  itemsEl.querySelectorAll('.lnav-arrow').forEach(arrow => {
+    arrow.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = arrow.dataset.arrowId;
+      if (lnavExpanded.has(id)) lnavExpanded.delete(id); else lnavExpanded.add(id);
+      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
+    });
+  });
+
+  // Lesson row click
+  itemsEl.querySelectorAll('.lnav-item').forEach(el => {
     el.addEventListener('click', (e) => {
-      if (e.target.closest('.lnav-rename-btn')) return;
+      if (e.target.closest('.lnav-rename-btn') || e.target.closest('.lnav-arrow')) return;
       const id = el.dataset.navId;
-      if (id === currentId) {
-        if (lnavExpanded.has(id)) lnavExpanded.delete(id); else lnavExpanded.add(id);
-        renderLessonNav();
-      } else {
+      if (id !== currentId) {
         const storeItem = getLessonStore()[id];
         if (storeItem && storeItem.data) {
           loadLessonData(storeItem.data);
           setCurrentLessonId(id);
           lnavExpanded.add(id);
-          renderLessonNav();
+          renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), id);
         }
       }
     });
   });
 
-  // Sub-item click: jump to slide
-  dd.querySelectorAll('.lnav-sub-item').forEach(el => {
+  // Sub-item click
+  itemsEl.querySelectorAll('.lnav-sub-item').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = el.dataset.subId;
@@ -2787,7 +2778,7 @@ function renderLessonNav() {
   });
 
   // Rename btn
-  dd.querySelectorAll('.lnav-rename-btn').forEach(btn => {
+  itemsEl.querySelectorAll('.lnav-rename-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.dataset.renameId;
@@ -2805,8 +2796,7 @@ function renderLessonNav() {
       const commit = () => {
         if (committed) return;
         committed = true;
-        const newTitle = inp.value.trim();
-        renameLessonInStore(id, newTitle || currentTitle);
+        renameLessonInStore(id, inp.value.trim() || currentTitle);
       };
       inp.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -2816,8 +2806,46 @@ function renderLessonNav() {
     });
   });
 
-  const manageBtn = dd.querySelector('#lnav-manage');
+  const manageBtn = itemsEl.querySelector('.lnav-manage-btn');
   if (manageBtn) manageBtn.addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
+}
+
+function renderLessonNav() {
+  const dd = $('#lesson-nav-dropdown');
+  const store = getLessonStore();
+  const keys = Object.keys(store).sort((a, b) => (store[a].savedAt || 0) - (store[b].savedAt || 0));
+  const currentId = getCurrentLessonId();
+
+  if (currentId) lnavExpanded.add(currentId);
+
+  // Build skeleton once (search stays in DOM across re-renders)
+  if (!dd.querySelector('.lnav-search-wrap')) {
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'lnav-search-wrap';
+    searchWrap.innerHTML = '<input class="lnav-search" type="text" placeholder="수업 검색...">';
+    dd.appendChild(searchWrap);
+
+    const searchEl = searchWrap.querySelector('.lnav-search');
+    searchEl.addEventListener('compositionend', (e) => {
+      lnavSearchQuery = e.target.value;
+      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
+    });
+    searchEl.addEventListener('input', (e) => {
+      if (e.isComposing) return;
+      lnavSearchQuery = e.target.value;
+      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
+    });
+    searchEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { lnavSearchQuery = ''; closeLessonNav(); }
+      e.stopPropagation();
+    });
+  }
+
+  // Sync search value if cleared externally
+  const searchEl = dd.querySelector('.lnav-search');
+  if (searchEl && searchEl.value !== lnavSearchQuery) searchEl.value = lnavSearchQuery;
+
+  renderLessonNavItems(dd, store, keys, currentId);
 }
 
 function toggleLessonNav() {

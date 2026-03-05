@@ -1,0 +1,239 @@
+[CHAPTER] 03강
+[TYPE] 빈칸추론·어휘
+
+---PASSAGE 1: Ex01 (25007-0025)---
+[EN]
+What is said is never a . Even if one agrees word for word with something that has been said before, everything — the world, the speaker, the circumstances, the addressee, and the meaning of what was said — has changed. What one says is therefore in each case unique. Although most of our statements are unoriginal, they show through their particular, even unique, style (which can be dull, ugly, or trivial) that someone has appropriated and therewith personalized them. Every sentence proves that the author has changed a received gift into a thought of her own. An analysis of what is one’s own might then reveal much of what the speaker has borrowed from parents, guides, friends, books, fashions, etc., while at the same time disclosing how all these influences have converged into the unique results of what the author said. (cid:8281) trivial: 진부한 (cid:8281)(cid:8281) therewith: 그와 함께 (cid:8281)(cid:8281)(cid:8281) converge: 한데 모이다
+
+[KO]
+말하여진 것은 결코 단순한 반복이 아니다. 설령 한 사람
+이 이전에 말했던 것과 정확히 말한[글자] 그대로를 일치시킨다
+하더라도, 세상, 화자, 상황, 청자, 그리고 말했던 것의 의미 등
+모든 것이 변했다. 그러므로 사람이 말하는 것은 각각의 경우에
+고유하다. 비록 우리의 발언 대부분이 딴 데서 빌려온 것이라 할
+지라도, 그것(발언)은 (단조롭거나, 추하거나, 진부할 수 있는) 그
+것의 특별하고 심지어 고유한 스타일을 통해 누군가가 그것을 자
+기 것으로 만들고, 그와 함께 (그것을) 개인화했다는 것을 보여 준
+다. 모든 문장은 필자가 받은 선물을 자신의 생각으로 바꾸었다는
+것을 증명한다. 자신의 것[말이나 글]인 것에 대한 분석은, 그렇다
+면, 화자가 부모, 스승, 친구, 책, 유행 등으로부터 빌린 것의 많
+은 부분을 드러내 보일 수도 있으며, 동시에 이러한 모든 영향이
+어떻게 필자가 말했던 것의 고유한 결과물로 한데 모아졌는지 밝
+힐 수도 있다.
+
+---PASSAGE 2: Ex02 (25007-0026)---
+[EN]
+Worry is often . In a world marred by uncertainty, doubt continuously swirling around you, a question rises to the surface of your awareness. And in that moment of recognition, you might choose to solve the mystery. You engage in worrying, hoping against hope that you’ll finally nail down the unsolvable questions troubling your life. Uncertainty, or rather, the impatience with uncertainty, is a common thread running through many aspects of worrying. The quest for a neat and satisfying resolution frequently drives this behavior. It’s understandable — it’s likely born out of a tireless commitment to do better, driven by a willingness to pursue the important things in your life — but worrying begins to deviate from that path. Despite your good intentions, you get trapped in thought rather than called to action. (cid:8281) mar: 손상시키다 (cid:8281)(cid:8281) swirl: 소용돌이치다 (cid:8281)(cid:8281)(cid:8281) deviate: 벗어나다
+
+[KO]
+걱정은 흔히 불완전함에 대한 인식이다. 불확실성으로 손
+상된 세상에서, 의심이 끊임없이 여러분의 주위에서 소용돌이치
+는 가운데, 하나의 물음이 여러분의 의식 표면으로 떠오른다. 그
+리고 그 인식의 순간에, 여러분은 그 수수께끼를 풀기로 결정할
+수도 있다. 여러분은 여러분의 삶을 괴롭히는 풀 수 없는 문제를
+마침내 해결하길 바라는 희망을 버리지 않으면서 걱정을 한다. 불
+확실성, 더 정확하게는 불확실성에 대한 조바심은 걱정의 많은 측
+면에 걸쳐 있는 공통된 맥락이다. 깔끔하고 만족스러운 해결책을
+찾으려는 추구가 자주 이 행동을 하도록 만든다. 아마도 더 잘하
+고자 하는 지칠 줄 모르는 전념에서 비롯된, 여러분의 삶에서 중
+요한 것들을 추구하려는 의지에 의해 주도되었을 것 같기에, 그것
+은 이해할 만하지만 걱정은 그 길에서 벗어나기 시작한다. 여러분
+의 좋은 의도에도 불구하고, 여러분은 행동에 나서기보다는 생각
+에 갇히게 된다.
+
+---PASSAGE 3: Ex03 (25007-0027)---
+[EN]
+In the early days of the commercial internet, scholars discovered that, in cyberspace, computer code operated as a kind of ‘law’. Not law as we know it — public rules decided by legislators and judges — but a different kind of law, embedded in the tech itself. Whenever we use an app, platform, smartphone or computer, we have no choice but to follow the strict rules that are coded into these technologies. Some rules are commonplace, like the rule that you cannot access this system without the correct password. Hence the young man who lost more than $200 million because he couldn’t remember the password to his virtual currency wallet. Other rules are more controversial. In late 2020, one social media platform made it impossible for users to share a controversial article containing allegations of corruption about a public figure’s son, on the basis that it violated the platform’s rules against sharing hacked material. As more and more of our actions, interactions and transactions are mediated through digital technology, those who write code increasingly . Software engineers are becoming social engineers. (cid:8281) embedded: 내장된 (cid:8281)(cid:8281) allegation: 혐의, 주장
+
+[KO]
+상업적 인터넷의 초기 시절, 학자들은 사이버 공간에서 컴
+퓨터 코드가 일종의 ‘법’으로서 작동한다는 것을 발견했다. 우리가
+알고 있는 법, 즉 입법자와 판사들이 결정하는 공공 규칙이 아니
+라, 기술 자체에 내장된 다른 종류의 법이었다. 우리가 앱, 플랫
+폼, 스마트폰 또는 컴퓨터를 사용할 때마다, 우리는 이러한 기술
+영향을 주다, 가능하게 하다
+폼 전반에 걸쳐 열띤 논쟁을 불러일으켰다.
+할 것이다.
+
+---PASSAGE 4: Ex04 (25007-0028)---
+[EN]
+It wasn’t really until the late ’70s and early ’80s that the concept of brands began to extend into all areas of business. As entities were privatized, markets opened up and competition became fiercer, so the need to differentiate your business became greater. Utilities, telecoms providers, banks, insurance companies and airlines were all now enthusiastically embracing the power of branding. As brand owners fought for space in your mind, advertising became incredibly influential. The focus was on imbuing products and services with meaning so that you as the customer could surround yourself with the brands that best represented you — the very notion of shopping as a form of personal expression. Even businesses serving other businesses began to realize that having a brand was an important business support. Brands were now seen as more than just a logo or a tagline; they were . (cid:8281) entity: 기업 (cid:8281)(cid:8281) imbue: 불어넣다, 가득 채우다 (cid:8281)(cid:8281)(cid:8281) tagline: 태그라인(기업, 브랜드 등에 꼬리표처럼 따라붙는 함축적 단어나 짧은 문구)
+
+[KO]
+사실 70년대 후반과 80년대 초반이 되어서야 비로소 브랜
+드 개념이 모든 사업 분야로 확장되기 시작했다. 기업이 민영화되
+고, 시장이 개방되며, 경쟁이 더 치열해짐에 따라 여러분의 사업
+을 차별화할 필요성이 더 커졌다. 공익 사업체, 통신사, 은행, 보
+험사, 그리고 항공사가 모두 이제 브랜드의 힘을 열렬히 받아들이
+고 있었다. 브랜드 소유자들이 여러분의 마음속에 자리잡기 위해
+경쟁하면서, 광고는 엄청나게 영향력이 커졌다. 초점은 고객으로
+서의 여러분이 자신을 가장 잘 대표하는 브랜드에 둘러싸일 수 있
+도록 제품과 서비스에 의미를 불어넣는 데 맞추어져 있었는데, 이
+는 쇼핑을 개인적인 표현의 한 형태로 여기는 바로 그 개념이었
+다. 심지어 다른 기업에 서비스를 제공하는 기업도 브랜드를 갖는
+것이 중요한 사업 지원이라는 것을 깨닫기 시작했다. 브랜드는 이
+제 단순한 로고나 태그라인 그 이상으로 여겨졌으며, 그것은 의미
+를 창출할 수 있는 기회로 여겨졌다.
+
+---PASSAGE 5: Ex05 (25007-0029)---
+[EN]
+There are many ordinary, daily-life situations like the following example. A straight stick put in water looks bent; yet we do not believe it has become bent just because it was immersed in water, which is an easily penetrable liquid. Railroad tracks seem to converge in the distance, and yet when we walk to the spot where they apparently merged we find them to be parallel. The wheels of automobiles seen on television seem to be going backward when the automobile is seen to be moving forward. Yet this is impossible. Such examples of distorted perception could be multiplied endlessly. Each of these sense phenomena is thus misleading in some way. If human beings were to accept the world as being exactly how it looks, . They would think the stick in water really to be bent, the writing on pages really to be reversed, and the wheels really to be going backward. (cid:8281) immerse: 담그다 (cid:8281)(cid:8281) penetrable: 뚫고 들어갈 수 있는 (cid:8281)(cid:8281)(cid:8281) converge: 수렴하다
+
+[KO]
+다음 예시와 같은 평범한 일상 상황이 많이 있다. 물에 담
+근 곧은 막대기는 구부러진 것처럼 보이지만, 우리는 단지 그 막
+대기가 쉽게 뚫고 들어갈 수 있는 액체인 물에 담겼다고 해서 그
+것이 구부러졌다고 믿지는 않는다. 철로는 먼 곳에서 수렴하는 것
+처럼 보이지만, 그것이 겉보기에 합쳐진 것처럼 보이는 지점까지
+걸어가 보면, 평행하다는 것을 알게 된다. 텔레비전에서 보이는
+자동차의 바퀴는, 자동차가 앞으로 움직이는 것으로 보일 때, 뒤
+로 가는 것 같다. 하지만 이것은 불가능하다. 이러한 왜곡된 인식
+사례는 끝없이 제시될 수도 있다. 따라서 각각의 이러한 감각 현
+상은 어떤 면에서 오해의 소지가 있다. 인간이 세상을 보이는 그
+대로 받아들인다면, 그들은 사물이 실제로 어떤지에 대해 속게 될
+것이다. 그들은 물에 있는 막대기가 정말로 구부러져 있고, 페이
+지에 있는 글씨가 정말로 거꾸로 되어 있으며, 바퀴가 정말로 뒤
+로 가고 있다고 생각할 것이다.
+
+---PASSAGE 6: Ex06 (25007-0030)---
+[EN]
+밑줄 친 the welcoming shelter of shade trees planted by others가 다음 글에서 의미하는 바로 가장 적절한 것은? According to an ancient Greek proverb, “A society grows great when old men plant trees in whose shade they shall never sit.” Likewise, an academic culture grows great when senior scholars perform acts of generosity for junior academics who may never know their names. Literary scholar and poet Lesley Wheeler remains “endlessly grateful” to the two anonymous readers whose thoughtful responses to her first book manuscript set her on the path to becoming a successful scholar: “They told me bluntly what was wrong with the book, but they also found the time to praise it; and that was enough encouragement.” Having benefited from the welcoming shelter of shade trees planted by others, Wheeler has little patience for “cranky” referees who poison the air with mean-spirited reviews. She takes care to ensure that her own feedback to colleagues and students is always gracious and constructive: “The conscientiousness and generosity that I’ve seen directed at my work is something that I want to pay back.” (cid:8281) anonymous: 익명의 (cid:8281)(cid:8281) bluntly: 직설적으로 (cid:8281)(cid:8281)(cid:8281) cranky: (성미가) 까다로운, 심기가 뒤틀린
+
+[KO]
+고대 그리스 속담에 따르면 “노인들이 그들은 그것(나무)
+의 그늘에 결코 앉지 못할 나무를 심을 때 그 사회는 크게 성장한
+다”는 말이 있다. 마찬가지로, 선배 학자들이 결코 자신의 이름조
+차 모를 수 있는 후배 학자들을 위해 관대한 행위를 할 때 학문 문
+화는 크게 성장한다. 문학 학자이자 시인인 Lesley Wheeler는
+러났다.
+만드는 데 도움이 되었다.
+
+---PASSAGE 7: Ex07 (25007-0031)---
+[EN]
+Working in small groups may foster the creativity of students, but just putting students together to work in small groups does not mean that creativity will automatically flourish. As with other aspects of productive teamwork, this process requires learning. According to Meissner, a notable researcher in educational psychology, to further creative thinking in mathematics education, we need to further . Students need to learn how to avoid the negative factors that affect creativity: cognitive interference, which includes production blocking, task-irrelevant behavior, and cognitive overload; and social inhibition, which includes social anxiety, free riding, and illusion of productivity. They also need to learn to recognize factors that can strengthen the potential of groups to generate ideas; for example, social stimulation, which includes both increased individual accountability and the development of shared standards for team performance; and cognitive stimulation, which includes stimulation of associations, attention to others’ contributions, and opportunities to incubate ideas. (cid:8281) incubate: 생각해 내다
+
+[KO]
+소그룹에서 공부하는 것이 학생들의 창의성을 키울 수도
+있지만, 단순히 학생들을 소그룹으로 묶어 공부하게 하면 창의성
+이 저절로 꽃피리라는 것을 의미하는 것은 아니다. 생산적인 팀워
+크의 다른 측면의 경우와 마찬가지로 이 과정에서도 학습이 필요
+하다. 교육 심리학 분야의 저명한 연구자인 따르면,
+수학 교육에서 창의적 사고를 발전시키기 위해서는 개인적 능력
+과 사회적 능력 모두를 발전시킬 필요가 있다. 학생들은 창의성에
+영향을 미치는 부정적인 요인을 피하는 방법을 배워야 하는데, 이
+러한 요인에는 산출 방해, 과제와 무관한 행동, 인지 과부하가 포
+함된 ‘인지적 간섭’ 그리고 사회적 불안, 무임승차, 생산성의 착각
+이 포함된 ‘사회적 억제’가 있다. 그들은 또한 집단의 아이디어 창
+출 잠재력을 강화할 수 있는 요인을 인식하는 법도 배워야 하는
+데, 예컨대 그 요인에는 개인의 책임감 증가와 팀 성과에 대한 공
+유된 기준 개발을 포함하는 ‘사회적 자극’과 연상에 대한 자극, 타
+인의 기여에 대한 관심, 아이디어를 생각해 내는 기회 등을 포함
+하는 ‘인지적 자극’이 있다.
+
+---PASSAGE 8: Ex08 (25007-0032)---
+[EN]
+Although it has been demonstrated that spaced learning sessions are usually more effective than massed learning sessions, in real-life settings this advantage may sometimes be . For example, there are some occasions when we only have a limited period of time available for study (for example, when we have only one hour left to revise before an exam); in such cases, it may be better to use the entire period rather than to take breaks, which will waste some of our available time. Again, a very busy person might have difficulty fitting a large number of separate learning sessions into their daily schedule. A further problem is that spaced learning obviously requires more time overall (i.e., total time including rest breaks) than massed learning, and therefore may not represent the most efficient use of that time unless the rest breaks can be used for something worthwhile. Because spaced learning can create practical problems of this kind, there is no clear agreement about its value in a real-life learning setting such as a school classroom. (cid:8281) spaced learning: 분산 학습 (cid:8281)(cid:8281) massed learning: 집중 학습
+
+[KO]
+비록 분산 학습 시간이 집중 학습 시간보다 보통 더 효과
+적인 것으로 입증되었지만, 실제 환경에서는 때때로 이 장점이 현
+실적인 고려 사항으로 인해 손상될 수 있다. 예를 들어, 공부할 수
+있는 시간이 제한된 경우(예를 들어, 시험 전에 복습할 시간이 한
+2.
+그 회의 참석은 귀중한 통찰력을 얻었으므로 가치 있는 경험이었다.
+spaced learning(분산 학습): 일정한 시간을 나누어 중간에 휴식
+을 취하면서 학습하는 방식으로, 특정 과목의 시험을 준비하는 데 6시간
+정도 학습 시간이 필요하다면 2시간씩 3일 동안 학습하는 것을 말한다.
+학습): 주어진 분량을 일정한 시간에 연
+속적으로 공부하여 마무리하는 학습 방법으로, 중간에 휴식을 취하지
+않고 계속해서 학습하는 것을 말한다.
+
+---PASSAGE 9: Ex09 (25007-0033)---
+[EN]
+In recent years, more H₂O has been flowing from low-value crops (cotton and alfalfa) to high-value ones (nuts and berries). Ailing farms are selling their water rights to productive industry and rapidly growing cities. Food grown in wet, green climates (the northeastern United States, Brazil) is increasingly being exported to dry, brown ones (Arizona, India), allowing their water to be conserved for drinking supplies, for maintaining aquifer levels, or for other high-priority uses. Yet people have tended to dance around the question of pricing water in a way that reflects scarcity. Because water is an essential resource, it has no “market value,” as, say, oil does. But with no price incentive to use it efficiently, people often waste water by using vast quantities for energy and mineral projects, and polluting it. In many places water is free, or priced so low that the revenue it generates is not enough to maintain, or upgrade, reservoirs, distribution pipes, and treatment plants. While citizens have good reason to be cautious of water privatizers, . (cid:8281) alfalfa: 알팔파, 자주개자리(사료 작물인 콩과(科) 식물) (cid:8281)(cid:8281) ailing: 침체된, 병든 (cid:8281)(cid:8281)(cid:8281) aquifer: 대수층(지하수를 품고 있는 지층)
+
+[KO]
+최근 몇 년간, 더 많은 H₂O가 저가 작물(면화와 알팔파)
+에서 고가 작물(견과류와 딸기류)로 흘러가고 있다. 침체된 농장
+은 물 사용권을 생산적인 산업과 급성장하는 도시에 팔고 있다.
+습한 녹색 기후 지역(미국 북동부, 브라질)에서 재배된 식품이 건
+조한 갈색 기후 지역(애리조나, 인도)으로 점점 더 수출되고 있어,
+그 지역의 물이 식수 공급을 위해, 대수층 수준 유지를 위해 또는
+기타 우선순위가 높은 용도를 위해 보존될 수 있게 한다. 그러나
+사람들은 희소성을 반영하는 방식으로 물 가격을 책정하는 문제
+에 대해 말하기를 회피해 온 경향이 있다. 물은 필수 자원이기 때
+문에, 그것은, 말하자면 기름이 가지고 있는 ‘시장 가치’가 없다.
+그러나 물을 효율적으로 사용하기 위한 가격 유인이 없기 때문에,
+사람들은 에너지와 광물 프로젝트에 막대한 양의 물을 사용하고,
+물을 오염시킴으로써 물을 낭비하는 경우가 많다. 많은 곳에서 물
+은 공짜이거나, 가격이 너무 낮게 책정되어, 그것이 창출하는 수
+익이 저수지나 배수관 및 처리장을 유지하거나 개선하기에 충분
+하지 않다. 시민들이 물 민영화를 주장하는 사람들에 대해 경계해
+야 할 충분한 이유가 있지만, 값싼 물은 낭비를 초래한다.
+
+---PASSAGE 10: Ex10 (25007-0034)---
+[EN]
+At their most basic level, monsters represent fears held by society, fears associated with dangers perceived in the surrounding world. These fears have a powerful evolutionary history by encouraging people to flee instead of fighting suicidal battles. When ancient hunters encountered a saber-toothed tiger by accident, they ran. When the human ancestor Homo erectus caught angry cave bears by surprise, it ran. When chimpanzees and bonobos, the nearest genetic relatives to modern humans, encounter large predators in the wild, they run. While Hollywood heroes have made running away distinctly unpopular on the silver screen, every single actor who has ever portrayed a hero who stood his or her ground against some abominable terror comes from a long genetic lineage of cowards who fled in the face of danger. That is why they are here to act today. If their ancestors had fought against monsters far more powerful than themselves, as Hollywood heroes do all the time, their lineage would have been destroyed by predators long ago. Fear, in short, . (cid:8281) saber-toothed tiger: 검치호랑이 (cid:8281)(cid:8281) abominable: 끔찍한 (cid:8281)(cid:8281)(cid:8281) lineage: 혈통
+
+[KO]
+가장 기본적인 수준에서, 괴물은 사회가 가진 두려움, 즉
+주변 세계에서 인식되는 위험과 관련이 있는 두려움을 상징한다.
+이러한 두려움은 자멸을 초래하는 싸움을 하는 대신에 도망치도
+록 사람들을 장려함으로써 강력한 진화적 역사를 가지고 있다. 고
+대의 사냥꾼들은 우연히 검치호랑이를 만났을 때 도망쳤다. 인간
+조상인 ‘호모 에렉투스’는 화난 동굴 곰을 갑자기 마주쳤을 때 도
+망쳤다. 현대 인간의 가장 가까운 유전적 친척인 침팬지와 보노보
+는 야생에서 큰 포식자를 마주칠 때 도망친다. 할리우드 영웅들로
+인해 도망치는 것은 (영화의) 은막에서 확실히 인기가 없게 되었
+지만, 어떤 끔찍한 공포에 맞서 자기 자리를 지킨 영웅을 연기해
+온 모든 배우 한 사람 한 사람은 위험에 직면했을 때 도망친 겁쟁
+이들의 긴 유전적 혈통의 출신이다. 그것이 그들이 오늘날 여기서
+연기할 수 있는 이유이다. 만약 그들의 조상이 할리우드 영웅들이
+항상 하는 것처럼 자신들보다 훨씬 더 강력한 괴물들과 싸웠더라
+면, 그들의 혈통은 오래전에 포식자들에 의해 파괴되었을 것이다.
+간단히 말해, 두려움은 사람들을 살아 있게 한다.
+
+---PASSAGE 11: Ex11 (25007-0035)---
+[EN]
+In the 1950s, hardly anyone was interested in yeast. To most, it didn’t seem we could learn much about our complex selves by studying a tiny fungus. It was a struggle to convince the scientific community that yeast could be useful for something more than baking bread, brewing beer, and vinting wine. What Mortimer and Johnston recognized, and what many others began to realize in the years to come, was that . For their size, their genetic and biochemical makeup is extraordinarily complex, making them an exceptionally good model for understanding the biological processes that sustain life and control lifespans in large complex organisms such as ourselves. If you are doubtful that a yeast cell can tell us anything about cancer, Alzheimer’s disease, rare diseases, or aging, consider that there have been five Nobel Prizes in Physiology or Medicine awarded for genetic studies in yeast, including the 2009 prize for discovering how cells counteract telomere shortening, one of the characteristics of aging. (cid:8281) fungus: 균류 (cid:8281)(cid:8281) vint: (과실주를) 빚다, 만들다 (cid:8281)(cid:8281)(cid:8281) telomere: 텔로미어, 말단 소립
+
+[KO]
+1950년대에는 거의 아무도 효모에 관심을 가지지 않았
+다. 대부분의 사람들에게 작은 균류 연구를 통해 복잡한 우리 자
+신에 대해 많은 것을 배울 수 있을 것 같지 않았다. 효모가 빵을
+굽고 맥주를 양조하며 와인을 빚는 것보다 더 많은 어떤 유용성을
+지닐 수 있다는 것을 과학계에 설득하는 것은 어려운 일이었다.
+Mortimer와 Johnston이 인식하고, 이후 많은 사람들이 깨닫기
+시작했던 것은 그 작은 효모 세포들이 우리 자신과 크게 다르지
+않다는 것이었다. 그 크기에 비해, 효모의 유전적, 생화학적 구성
+은 매우 복잡하여, 우리 자신과 같은 크고 복잡한 생물에서 생명
+을 유지하고 수명을 조절하는 생물학적 과정을 이해하는 데 특별
+히 좋은 모델이 된다. 만일 여러분이 효모 세포가 암, 알츠하이머
+병, 희귀 질환 또는 노화에 대해 우리에게 무엇인가를 알려 줄 수
+있다는 것이 미심쩍다면, 세포가 노화의 특징 중 하나인 텔로미어
+단축에 어떻게 대응하는지 발견하여 주어진 2009년 수상을 포함하
+여, 효모의 유전 연구로 5개의 노벨 생리의학상이 수여되었다는 것
+을 고려해 보라.
+
+---PASSAGE 12: Ex12 (25007-0036)---
+[EN]
+밑줄 친 to arrive safely at your destination with money in your pocket이 다음 글에서 의미하는 바로 가장 적 절한 것은? Rules govern our daily lives. Some of these rules are explicit, imposed by government: “obey the speed limit,” “no parking,” “April 15 is tax day.” But most are informal, often unspoken cultural norms — rules of politeness, rules of conduct in the business world, rules of interaction between people. Most are commonly understood traditions that have built up over time, habits so ordinary that we usually don’t even think about them. Unfortunately, not all such involuntary habits and subconscious conventions are positive or productive. American business and political communication is rife with bad habits and unhelpful tendencies that can do serious damage to the companies and causes they seek to promote. Just as in every other field, there are rules to good, effective communication. They may not be as inflexible and absolute as the rules against speeding or avoiding your taxes, but they’re just as important if you wish to arrive safely at your destination with money in your pocket. (cid:8281) rife with: ~이 만연한, ~로 가득 찬
+
+[KO]
+규칙은 우리의 일상생활을 지배한다. 이러한 규칙 중 일부
+는 명시적이며 정부에 의해 시행되는데, ‘속도 제한 준수’, ‘주차
+금지’, ‘4월 15일은 납세의 날’ 같은 것들이다. 그러나 대부분은
+비공식적이고 말로 표현되지 않은 경우가 많은 문화적 규범인데,
+예의범절, 비즈니스 세계의 행동강령, 사람들 간의 상호 작용 규
+칙 같은 것들이다. 대부분은 시간이 지나면서 형성된 일반적으로
+이해되는 전통, 즉 우리가 보통 생각조차도 하지 않을 만큼 일상
+적인 습관이다. 안타깝게도, 이러한 자기도 모르게 나오는 습관과
+잠재의식적인 관습들이 모두 긍정적이거나 생산적인 것은 아니
+다. 미국의 비즈니스 및 정치적 의사소통에는 그들이 홍보하고자
+하는 회사와 대의에 심각한 피해를 입힐 수 있는 나쁜 습관과 도
+움이 되지 않는 경향이 만연해 있다. 다른 모든 분야와 마찬가지
+로, 좋고 효과적인 의사소통에는 규칙이 있다. 그것은 속도위반이
+나 세금 회피에 대한 규칙만큼 엄격하고 절대적이지는 않을 수도
+있지만, 여러분의 주머니에 돈이 있는 채로 목적지에 안전하게 도
+착하고 싶다면 그만큼 중요하다.
+
