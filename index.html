@@ -148,6 +148,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   background: rgba(124,58,237,0.15); color: #a78bfa; font-size: 13px; font-family: inherit;
 }
 .lnav-footer button:hover { background: rgba(124,58,237,0.25); }
+.lnav-rename-btn {
+  opacity: 0.3; background: none; border: none; cursor: pointer; padding: 2px 4px;
+  font-size: 12px; color: #64748b; border-radius: 4px; margin-left: 4px;
+  transition: opacity 0.15s; flex-shrink: 0;
+}
+.lnav-item:hover .lnav-rename-btn { opacity: 1; }
+.lnav-item.active .lnav-rename-btn { opacity: 0.5; }
+.lnav-rename-btn:hover { background: rgba(124,58,237,0.2); color: #a78bfa; }
+.lnav-rename-input {
+  flex: 1; background: #0f172a; border: 1px solid #7c3aed; border-radius: 4px;
+  color: #e2e8f0; font-size: 13px; padding: 2px 6px; outline: none; font-family: inherit;
+}
 
 /* ===== SLIDE CONTAINER ===== */
 #slide-container {
@@ -365,7 +377,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 /* ===== PANEL CONTENT ===== */
 .panel-empty { text-align: center; color: var(--text-muted); padding: 32px 16px; font-size: 13px; }
 .translation-ko { font-size: 14px; line-height: 1.9; color: var(--text-primary); }
-.summary-block { padding: 16px; }
+.summary-block { padding: 0; }
 .summary-topic { font-size: 14px; font-weight: 700; color: var(--text-primary); padding: 10px 14px; background: var(--surface-muted); border-left: 3px solid var(--purple); border-radius: 4px; margin-bottom: 12px; }
 .summary-points { margin: 0; padding-left: 20px; }
 .summary-points li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
@@ -935,8 +947,6 @@ window.LESSON_DATA = {
 <script src="lessons/ch03_gist.js"></script>
 <script src="lessons/ch04_claim.js"></script>
 <script src="lessons/march25_types.js"></script>
-<script src="lessons/ch03_blank.js"></script>
-<script src="lessons/ch04_blank.js"></script>
 
 <script>
 // ===== STATE =====
@@ -1664,6 +1674,19 @@ function onPointerDown(e) {
     return;
   }
 
+  // Text-following eraser: if eraser tool over highlighted sentence, remove CSS highlight
+  if (STATE.drawingMode === 'eraser') {
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent && sent.classList.contains('text-hl')) {
+        sent.classList.remove('text-hl');
+        STATE.textErasing = true;
+        return;
+      }
+    }
+  }
+
   // Text-following highlighter: if highlighter tool over passage text, apply CSS highlight
   if (STATE.drawingMode === 'highlighter') {
     const hitEl = hitTestThrough(e.clientX, e.clientY);
@@ -1709,6 +1732,16 @@ function onPointerMove(e) {
     }
     return;
   }
+  // Text-following eraser: remove CSS highlight on dragged sentences
+  if (STATE.textErasing && STATE.drawingMode === 'eraser') {
+    e.preventDefault();
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent) sent.classList.remove('text-hl');
+    }
+    return;
+  }
   // Text-following highlighter: highlight sentences as pointer drags over them
   if (STATE.textHighlighting && STATE.drawingMode === 'highlighter') {
     e.preventDefault();
@@ -1742,6 +1775,7 @@ function onPointerUp(e) {
     STATE.currentStroke = null;
     return;
   }
+  if (STATE.textErasing) { STATE.textErasing = false; return; }
   if (STATE.textHighlighting) { STATE.textHighlighting = false; return; }
   if (!STATE.isDrawing) return;
   STATE.isDrawing = false;
@@ -2460,8 +2494,9 @@ function renderLessonNav() {
       const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
       const title = (item.data && item.data.title) || id;
       html += `<div class="lnav-item${active}" data-nav-id="${esc(id)}">
-        <span>${esc(title)}</span>
+        <span class="lnav-item-title">${esc(title)}</span>
         <span class="lnav-slides">${slides}슬라이드</span>
+        <button class="lnav-rename-btn" data-rename-id="${esc(id)}" title="제목 수정">✏️</button>
       </div>`;
     });
   });
@@ -2473,8 +2508,9 @@ function renderLessonNav() {
       const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
       const title = (item.data && item.data.title) || id;
       html += `<div class="lnav-item${active}" data-nav-id="${esc(id)}">
-        <span>${esc(title)}</span>
+        <span class="lnav-item-title">${esc(title)}</span>
         <span class="lnav-slides">${slides}슬라이드</span>
+        <button class="lnav-rename-btn" data-rename-id="${esc(id)}" title="제목 수정">✏️</button>
       </div>`;
     });
   }
@@ -2495,6 +2531,34 @@ function renderLessonNav() {
       }
     });
   });
+  dd.querySelectorAll('.lnav-rename-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.renameId;
+      const storeItem = getLessonStore()[id];
+      const currentTitle = (storeItem && storeItem.data && storeItem.data.title) || id;
+      const lnavItem = btn.closest('.lnav-item');
+      const inp = document.createElement('input');
+      inp.className = 'lnav-rename-input';
+      inp.value = currentTitle;
+      lnavItem.innerHTML = '';
+      lnavItem.appendChild(inp);
+      inp.focus();
+      inp.select();
+      let committed = false;
+      const commit = () => {
+        if (committed) return;
+        committed = true;
+        const newTitle = inp.value.trim();
+        renameLessonInStore(id, newTitle || currentTitle);
+      };
+      inp.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        if (ev.key === 'Escape') { committed = true; renderLessonNav(); }
+      });
+      inp.addEventListener('blur', commit);
+    });
+  });
   const manageBtn = dd.querySelector('#lnav-manage');
   if (manageBtn) manageBtn.addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
 }
@@ -2511,6 +2575,23 @@ function toggleLessonNav() {
 
 function closeLessonNav() {
   $('#lesson-nav-dropdown').classList.remove('open');
+}
+
+function renameLessonInStore(oldId, newTitle) {
+  if (!newTitle.trim() || newTitle === oldId) { renderLessonNav(); return; }
+  const store = getLessonStore();
+  if (!store[oldId]) { renderLessonNav(); return; }
+  store[newTitle] = { ...store[oldId], data: { ...store[oldId].data, title: newTitle } };
+  delete store[oldId];
+  saveLessonStore(store);
+  if (getCurrentLessonId() === oldId) {
+    setCurrentLessonId(newTitle);
+    STATE.lesson.title = newTitle;
+    $('#lesson-title-bar').textContent = newTitle;
+    const sl = $('#status-lesson');
+    if (sl) sl.textContent = newTitle;
+  }
+  renderLessonNav();
 }
 
 // Close dropdown when clicking outside
