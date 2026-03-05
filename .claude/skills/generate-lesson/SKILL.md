@@ -88,10 +88,17 @@ window.LESSON_LIBRARY.push({
     // 지문 전체 문장 수만큼 — 줄바꿈 병합만 허용, 내용 변경 금지
   ],
 
-  // topic 30자 이내 한국어, points ≥ 3개
+  // 내용 정리 — 핵심분석 PDF 포맷 준수 (4개 필드 필수)
+  // label 가이드: 배경·문제·통념·원칙 / 변화·전개·대비·전략·반론 / 결과·결론·핵심·이중성
   summary: {
-    topic: "한국어 요지 (30자 이내)",
-    points: ["흐름: A → B → C", "핵심 포인트 1", "핵심 포인트 2"]
+    title_ko: "한 줄 요약 주제문 (한국어, 동사로 끝나는 완전한 문장)",
+    flow: ["논리 단계1 (10자 이내)", "논리 단계2", "논리 단계3"],
+    points: [
+      { label: "배경", text: "구체 내용 — 원인/전제/상황" },
+      { label: "변화", text: "구체 내용 — 전개/핵심 논거" },
+      { label: "결론", text: "구체 내용 — 결과/함의/주장" }
+    ],
+    quote: "원문에서 핵심 영어 문장 (verbatim, 과장 없이 1문장)"
   },
 
   slides: [
@@ -146,7 +153,7 @@ node lessons/validate_node.js lessons/[파일명].js
 2. `questions.answer` ∈ [0, 4]
 3. `keysentence.en` 첫 5단어 ⊂ `passage.content`
 4. `translation` 배열 존재 + 각 항목에 `en`/`ko` 키 있음
-5. `summary` 객체 존재 + `topic`(문자열) + `points`(배열, ≥1)
+5. `summary` 객체 존재 + `title_ko`(문자열) + `flow`(배열 ≥2) + `points`(배열 ≥2, 각 `{label, text}`) + `quote`(문자열)
 
 오류 시 해당 지문만 재생성 → 재검증. 통과 시 다음 지문으로 진행.
 
@@ -203,7 +210,7 @@ index.html 등록: 완료
 ▶ 브라우저 새로고침 후 spot-check:
   □ questions — 정답이 지문 내용과 실제로 일치하는지
   □ vocabulary — 다른 지문 단어 혼입 없는지
-  □ summary.topic — 지문 요지와 맞는지
+  □ summary — 한줄 요약 / 논리 흐름 / 포인트 3행 / 인용문 표시 확인
   □ 한국어 해석 탭 — KO 원문 verbatim 확인 (대괄호 내용 포함)
 ```
 

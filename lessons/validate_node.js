@@ -101,14 +101,23 @@ function validate(lesson) {
     });
   }
 
-  // Rule 5: summary 객체 + topic + points
+  // Rule 5: summary 구조 (신규 포맷: title_ko + flow + points[{label,text}] + quote)
   if (!lesson.summary || typeof lesson.summary !== 'object') {
     errors.push('summary 객체 없음');
   } else {
-    if (!lesson.summary.topic) errors.push('summary.topic 없음');
-    if (!Array.isArray(lesson.summary.points) || lesson.summary.points.length === 0) {
-      errors.push('summary.points 없음 또는 비어있음');
+    const s = lesson.summary;
+    if (!s.title_ko) errors.push('summary.title_ko 없음');
+    if (!Array.isArray(s.flow) || s.flow.length < 2)
+      errors.push('summary.flow 배열 2개 이상 필요');
+    if (!Array.isArray(s.points) || s.points.length < 2) {
+      errors.push('summary.points 배열 2개 이상 필요');
+    } else {
+      s.points.forEach((pt, i) => {
+        if (typeof pt !== 'object' || !pt.label || !pt.text)
+          errors.push(`summary.points[${i}] {label, text} 구조 필요`);
+      });
     }
+    if (!s.quote) errors.push('summary.quote 없음');
   }
 
   return errors;
