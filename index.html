@@ -124,13 +124,14 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 #lesson-title-bar:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
 #lesson-title-bar::after { content: ' ▾'; font-size: 10px; opacity: 0.5; }
 .lnav-dropdown {
-  display: none; position: absolute; right: 0; top: 100%; margin-top: 6px;
+  display: none; flex-direction: column; position: absolute; right: 0; top: 100%; margin-top: 6px;
   background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-  width: 280px; max-height: 420px; overflow-y: auto; z-index: 3000;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5); padding: 6px;
+  width: 280px; max-height: 420px; overflow: hidden; z-index: 3000;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
-.lnav-dropdown.open { display: block; }
-.lnav-search-wrap { padding: 4px 4px 6px; }
+.lnav-dropdown.open { display: flex; }
+.lnav-search-wrap { flex-shrink: 0; padding: 6px 6px 4px; }
+.lnav-items { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding: 0 2px 4px; }
 .lnav-search {
   width: 100%; box-sizing: border-box; background: #0f172a; border: 1px solid #334155;
   border-radius: 6px; color: #e2e8f0; font-size: 12px; padding: 6px 10px;
@@ -187,7 +188,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 .slide {
-  min-width: 100%; height: 100%; padding: 40px 60px; overflow-y: auto;
+  min-width: 100%; height: 100%; padding: 40px 60px 80px; overflow-y: auto;
   display: flex; flex-direction: column;
   scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
 }
@@ -199,7 +200,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .slide-title-page {
   justify-content: center; align-items: center; text-align: center; gap: 16px;
 }
-.slide-title-page h1 { font-size: 2.8em; font-weight: 800; letter-spacing: -1px; line-height: 1.2; }
+.slide-title-page h1 { font-size: 1.8em; font-weight: 800; letter-spacing: -1px; line-height: 1.2; word-break: keep-all; overflow-wrap: break-word; }
 .slide-title-page .subtitle {
   font-size: 1.3em; color: var(--slide-text-secondary); font-weight: 400;
 }
@@ -639,7 +640,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 /* ===== MISC ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @media (max-width: 800px) {
-  .slide { padding: 24px 20px; }
+  .slide { padding: 24px 20px 80px; }
   #toolbar { padding: 0 6px; gap: 2px; }
   .tool-btn { min-width: 44px; height: 44px; padding: 0 6px; font-size: 11px; }
 }
@@ -2686,13 +2687,93 @@ function buildLnavSubItems(data) {
 
 let lnavSearchQuery = '';
 
-function renderLessonNavItems(dd, store, keys, currentId) {
+function renderLessonNavItems(dd) {
   let itemsEl = dd.querySelector('.lnav-items');
   if (!itemsEl) {
     itemsEl = document.createElement('div');
     itemsEl.className = 'lnav-items';
     dd.appendChild(itemsEl);
+
+    // Delegated listener registered ONCE on itemsEl creation
+    itemsEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const curId = getCurrentLessonId();
+
+      // ▶ arrow: toggle only
+      const arrow = e.target.closest('.lnav-arrow');
+      if (arrow) {
+        const id = arrow.dataset.arrowId;
+        if (lnavExpanded.has(id)) lnavExpanded.delete(id); else lnavExpanded.add(id);
+        renderLessonNavItems(dd);
+        return;
+      }
+
+      // ✏️ rename
+      const renameBtn = e.target.closest('.lnav-rename-btn');
+      if (renameBtn) {
+        const id = renameBtn.dataset.renameId;
+        const storeItem = getLessonStore()[id];
+        const currentTitle = (storeItem && storeItem.data && storeItem.data.title) || id;
+        const lnavItem = renameBtn.closest('.lnav-item');
+        const inp = document.createElement('input');
+        inp.className = 'lnav-rename-input';
+        inp.value = currentTitle;
+        lnavItem.innerHTML = '';
+        lnavItem.appendChild(inp);
+        inp.focus();
+        inp.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          renameLessonInStore(id, inp.value.trim() || currentTitle);
+        };
+        inp.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+          if (ev.key === 'Escape') { committed = true; renderLessonNav(); }
+        });
+        inp.addEventListener('blur', commit);
+        return;
+      }
+
+      // Sub-item: jump to slide
+      const subItem = e.target.closest('.lnav-sub-item');
+      if (subItem) {
+        const id = subItem.dataset.subId;
+        const slideIdx = parseInt(subItem.dataset.slideIdx);
+        if (id !== curId) {
+          const storeItem = getLessonStore()[id];
+          if (storeItem && storeItem.data) { loadLessonData(storeItem.data); setCurrentLessonId(id); }
+        }
+        if (slideIdx >= 0) goToSlide(slideIdx);
+        closeLessonNav();
+        return;
+      }
+
+      // Manage button
+      if (e.target.closest('.lnav-manage-btn')) { closeLessonNav(); openLessonModal(); return; }
+
+      // Lesson row: load lesson
+      const item = e.target.closest('.lnav-item');
+      if (item) {
+        const id = item.dataset.navId;
+        if (id !== curId) {
+          const storeItem = getLessonStore()[id];
+          if (storeItem && storeItem.data) {
+            loadLessonData(storeItem.data);
+            setCurrentLessonId(id);
+            lnavExpanded.add(id);
+            renderLessonNavItems(dd);
+          }
+        }
+      }
+    });
   }
+
+  // Re-render HTML only (listener already set up)
+  const store = getLessonStore();
+  const keys = Object.keys(store).sort((a, b) => (store[a].savedAt || 0) - (store[b].savedAt || 0));
+  const currentId = getCurrentLessonId();
 
   function renderItem(id, item) {
     const active = id === currentId ? ' active' : '';
@@ -2734,80 +2815,6 @@ function renderLessonNavItems(dd, store, keys, currentId) {
   }
   html += '<div class="lnav-footer"><button class="lnav-manage-btn">📚 수업 관리 열기</button></div>';
   itemsEl.innerHTML = html;
-
-  // Arrow click: toggle only
-  itemsEl.querySelectorAll('.lnav-arrow').forEach(arrow => {
-    arrow.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = arrow.dataset.arrowId;
-      if (lnavExpanded.has(id)) lnavExpanded.delete(id); else lnavExpanded.add(id);
-      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
-    });
-  });
-
-  // Lesson row click
-  itemsEl.querySelectorAll('.lnav-item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.lnav-rename-btn') || e.target.closest('.lnav-arrow')) return;
-      const id = el.dataset.navId;
-      if (id !== currentId) {
-        const storeItem = getLessonStore()[id];
-        if (storeItem && storeItem.data) {
-          loadLessonData(storeItem.data);
-          setCurrentLessonId(id);
-          lnavExpanded.add(id);
-          renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), id);
-        }
-      }
-    });
-  });
-
-  // Sub-item click
-  itemsEl.querySelectorAll('.lnav-sub-item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = el.dataset.subId;
-      const slideIdx = parseInt(el.dataset.slideIdx);
-      if (id !== currentId) {
-        const storeItem = getLessonStore()[id];
-        if (storeItem && storeItem.data) { loadLessonData(storeItem.data); setCurrentLessonId(id); }
-      }
-      if (slideIdx >= 0) goToSlide(slideIdx);
-      closeLessonNav();
-    });
-  });
-
-  // Rename btn
-  itemsEl.querySelectorAll('.lnav-rename-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.renameId;
-      const storeItem = getLessonStore()[id];
-      const currentTitle = (storeItem && storeItem.data && storeItem.data.title) || id;
-      const lnavItem = btn.closest('.lnav-item');
-      const inp = document.createElement('input');
-      inp.className = 'lnav-rename-input';
-      inp.value = currentTitle;
-      lnavItem.innerHTML = '';
-      lnavItem.appendChild(inp);
-      inp.focus();
-      inp.select();
-      let committed = false;
-      const commit = () => {
-        if (committed) return;
-        committed = true;
-        renameLessonInStore(id, inp.value.trim() || currentTitle);
-      };
-      inp.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
-        if (ev.key === 'Escape') { committed = true; renderLessonNav(); }
-      });
-      inp.addEventListener('blur', commit);
-    });
-  });
-
-  const manageBtn = itemsEl.querySelector('.lnav-manage-btn');
-  if (manageBtn) manageBtn.addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
 }
 
 function renderLessonNav() {
@@ -2828,12 +2835,12 @@ function renderLessonNav() {
     const searchEl = searchWrap.querySelector('.lnav-search');
     searchEl.addEventListener('compositionend', (e) => {
       lnavSearchQuery = e.target.value;
-      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
+      renderLessonNavItems(dd);
     });
     searchEl.addEventListener('input', (e) => {
       if (e.isComposing) return;
       lnavSearchQuery = e.target.value;
-      renderLessonNavItems(dd, getLessonStore(), Object.keys(getLessonStore()).sort((a, b) => (getLessonStore()[a].savedAt || 0) - (getLessonStore()[b].savedAt || 0)), getCurrentLessonId());
+      renderLessonNavItems(dd);
     });
     searchEl.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { lnavSearchQuery = ''; closeLessonNav(); }
@@ -2845,7 +2852,7 @@ function renderLessonNav() {
   const searchEl = dd.querySelector('.lnav-search');
   if (searchEl && searchEl.value !== lnavSearchQuery) searchEl.value = lnavSearchQuery;
 
-  renderLessonNavItems(dd, store, keys, currentId);
+  renderLessonNavItems(dd);
 }
 
 function toggleLessonNav() {
