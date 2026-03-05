@@ -341,6 +341,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.1);
 }
 #side-panel.open { transform: translateX(0); }
+#side-panel.resizing { transition: none; }
+#panel-resize-handle {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  cursor: col-resize; z-index: 10;
+}
+#panel-resize-handle::after {
+  content: ''; position: absolute; inset: 0; transition: background 0.15s;
+}
+#panel-resize-handle:hover::after { background: rgba(124, 58, 237, 0.18); }
+#panel-resize-handle.dragging::after { background: rgba(124, 58, 237, 0.3); }
+body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user-select: none !important; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700;
@@ -867,6 +878,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 
   <!-- SIDE PANEL -->
   <div id="side-panel">
+    <div id="panel-resize-handle"></div>
     <div class="panel-header">
       <span>자료</span>
       <button class="panel-close" id="panel-close-btn">&times;</button>
@@ -2048,6 +2060,42 @@ function setupEvents() {
     STATE.panelTab = btn.dataset.tab;
     renderPanel();
   }));
+
+  // ── 사이드 패널 너비 조절 ──
+  (() => {
+    const handle = $('#panel-resize-handle');
+    const panel  = $('#side-panel');
+    const MIN_W  = 240, MAX_W = 560;
+    let startX = 0, startW = 0;
+
+    // 저장된 너비 복원
+    const saved = localStorage.getItem('wb-panel-width');
+    if (saved) document.documentElement.style.setProperty('--panel-width', saved);
+
+    handle.addEventListener('pointerdown', e => {
+      startX = e.clientX;
+      startW = panel.getBoundingClientRect().width;
+      handle.setPointerCapture(e.pointerId);
+      handle.classList.add('dragging');
+      panel.classList.add('resizing');
+      document.body.classList.add('panel-resizing');
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!handle.hasPointerCapture(e.pointerId)) return;
+      const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
+      document.documentElement.style.setProperty('--panel-width', w + 'px');
+    });
+    handle.addEventListener('pointerup', e => {
+      if (!handle.hasPointerCapture(e.pointerId)) return;
+      handle.releasePointerCapture(e.pointerId);
+      handle.classList.remove('dragging');
+      panel.classList.remove('resizing');
+      document.body.classList.remove('panel-resizing');
+      const w = getComputedStyle(document.documentElement).getPropertyValue('--panel-width').trim();
+      localStorage.setItem('wb-panel-width', w);
+    });
+  })();
 
   // Nav touch zones
   $('#nav-prev').addEventListener('click', prevSlide);
