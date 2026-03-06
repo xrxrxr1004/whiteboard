@@ -1,215 +1,269 @@
-# 화이트보드 수업 데이터 생성 가이드
+# 양영학원 화이트보드 수업 데이터 생성 가이드
 
-## 사용 방법
-
-1. 이 가이드와 함께 영어 지문을 Claude에게 전달
-2. 생성된 `.js` 파일을 `lessons/` 폴더에 저장
-3. `whiteboard.html`의 `<script src="lessons/파일명.js">` 부분을 변경
-4. 브라우저에서 열기
-
----
-
-## Claude에게 보낼 프롬프트 (복사해서 사용)
+## 워크플로우
 
 ```
-아래 영어 지문을 분석해서, 양영학원 화이트보드 앱용 수업 데이터 .js 파일을 만들어줘.
-
-형식은 아래 JSON 구조를 따라 .js 파일로 출력해줘.
-파일 시작과 끝은 아래 래퍼 형식을 반드시 사용:
-```
-;(function(){ window.LESSON_LIBRARY = window.LESSON_LIBRARY || [];
-window.LESSON_LIBRARY.push({
-  // ... 수업 데이터 ...
-}); })();
-```
-
-[필수 슬라이드 구성]
-1. title — 수업 제목 + 유형(빈칸추론/주제/요지 등)
-2. passage — 지문 전체 + reveals(주제문/부연/예시 구분) + vocabulary(핵심 단어 6~8개)
-3. questions — 독해 문제 2~3개 (5지선다, 정답 인덱스 0부터, 해설 포함)
-4. grammar — 지문에 나온 핵심 문법 3~4개 (규칙 + 예문 + 하이라이트)
-5. keysentence — 핵심 영어 문장 2~3개 (영문 + 한국어 해석 + 문법 노트)
-6. freeform — 토론 질문 or 추가 활동 (HTML)
-7. freeform — 어휘 정리표 (HTML table)
-8. blank — 자유 필기용
-
-[reveals 규칙]
-- 지문을 "주제문 → 부연 설명 → 구체적 예시" 순으로 나눈다
-- start/end는 content 문자열의 인덱스 (0부터 시작, 공백 포함)
-- label: "주제문", "부연 설명 1", "부연 설명 2", "구체적 예시" 등
-- 주의: start/end 값이 정확해야 함. 직접 세서 확인할 것
-
-[vocabulary 규칙]
-- passage 슬라이드의 vocabulary 배열에 핵심 단어 6~8개
-- { word: "영단어", meaning: "한국어 뜻" }
-
-[questions 규칙]
-- answer는 0부터 시작하는 인덱스 (첫 번째 선지 = 0)
-- explanation은 한국어로 간결하게
-
-[grammar 규칙]
-- 지문에서 실제 사용된 문법 포인트 추출
-- highlight는 예문 안에서 강조할 단어/구문 (정확히 일치해야 함)
-
-[지문]
-(여기에 영어 지문을 붙여넣기)
-
-[문제 유형]
-(빈칸추론 / 주제 / 요지 / 제목 / 순서 / 삽입 / 어법 등)
+① 교재 PDF에서 영어 지문 + 한국어 해석 복사
+        ↓
+② 입력 파일(input.txt) 만들기
+   (지문 수 무관 — 5개든 20개든 동일 형식)
+        ↓
+③ Claude Code에 전달:
+   "이 파일로 수업 .js 만들어줘" + input.txt 내용 붙여넣기
+        ↓
+④ Claude Code 내부 자동 처리 (선생님이 기다리기만 하면 됨):
+   파싱 → [지문 1 생성 → 자동 검증] → [지문 2 생성 → 자동 검증] → ...
+        ↓
+⑤ 완성된 .js 파일 저장 (lessons/ 폴더)
+⑥ index.html에 스크립트 태그 추가
+⑦ 5분 spot-check → 완료
 ```
 
 ---
 
-## 데이터 구조 상세
+## ① 입력 파일 형식 (input.txt)
+
+```
+[CHAPTER] 05과
+[TYPE] 빈칸추론
+
+---PASSAGE 1: Gateway---
+[EN]
+We almost universally accept that playing video games is at best a pleasant break
+from the more important business of living.
+
+[KO]
+우리는 비디오 게임을 하는 것이 기껏해야 더 중요한 삶의 일상으로부터의
+즐거운 휴식이라는 것을 거의 보편적으로 받아들인다.
+
+---PASSAGE 2: Ex01---
+[EN]
+We think it's important to overcome any tendency to not talk about climate change...
+
+[KO]
+우리는 기후 변화에 대해 이야기하지 않으려는 경향을 극복하는 것이 중요하다고 생각한다...
+
+---PASSAGE 3: Ex02---
+[EN]
+...
+
+[KO]
+...
+
+(지문 수에 맞게 계속)
+```
+
+**규칙:**
+- `[CHAPTER]`와 `[TYPE]`은 파일 맨 위에 한 번만
+- `---PASSAGE N: 이름---` 구분자 정확히 지키기
+- `[EN]`과 `[KO]` 블록은 각 지문 내에 반드시 포함
+- 지문 순서와 번호는 그대로 유지 (Gateway=1, Ex01=2, Ex02=3 ...)
+
+---
+
+## ② Claude Code 지시문 (복사해서 사용)
+
+```
+양영학원 화이트보드 앱용 수업 파일을 만들어줘.
+
+아래 input.txt의 각 PASSAGE를 **순서대로 하나씩 독립적으로** 처리해서
+하나의 .js 파일로 묶어줘.
+
+처리 순서:
+1. 전체 파일을 파싱해서 PASSAGE 목록 추출
+2. 각 PASSAGE를 순서대로 처리:
+   a. 해당 PASSAGE만 보고 슬라이드 데이터 생성
+   b. 아래 오류 방지 규칙 자동 검증
+   c. 오류 발견 시 해당 지문만 재생성
+3. 모든 PASSAGE 완료 후 .js 파일 하나로 조립
+
+[INPUT]
+(여기에 input.txt 내용 전체 붙여넣기)
+
+---
+
+[각 PASSAGE에 생성할 항목]
+
+1. translation: [{en, ko}]
+   — [EN] 지문의 문장 단위 영한 쌍 (한국어는 [KO] 그대로 사용)
+
+2. summary: { topic, points[] }
+   — topic: 30자 이내 한국어 요지
+   — points: ["흐름: A→B→C", "핵심1", "핵심2"]
+
+3. resources: [{ type:"vocabulary", items:[{word,meaning}] }]
+   — 해당 지문에서 핵심 단어 6~8개
+
+4. slides:
+   - title (제목: "[CHAPTER] [이름] — [TYPE]")
+   - passage (content: 영어 지문 한 줄, vocabulary 배열, reveals 없음)
+   - questions (원본 1개 + 변형 1개, 5지선다, answer는 0-based 인덱스)
+   - grammar (3개 포인트, rule + example + highlight)
+   - keysentence (2문장, 지문에서 그대로 발췌)
+   - blank
+
+[오류 방지 규칙 — 각 지문 생성 후 자동 확인]
+- grammar.highlight 는 반드시 grammar.example 문자열 안에 그대로 포함되어야 함
+- questions.answer 는 0 이상 4 이하의 정수여야 함
+- keysentence.en 의 첫 5단어가 passage.content 안에 존재해야 함
+- 각 PASSAGE의 내용이 다른 PASSAGE에 섞이지 않도록
+```
+
+---
+
+## ③ 출력 형식 (.js 파일 구조)
 
 ```javascript
 ;(function(){ window.LESSON_LIBRARY = window.LESSON_LIBRARY || [];
-window.LESSON_LIBRARY.push({
-  title: "수업 제목 (예: Reading L3 — Urban Renewal)",
-  chapter: "3과",          // (선택) 챕터/단원 그룹핑용. 없으면 제목에서 자동 추출
 
-  settings: {
-    defaultBg: "white",      // white | grid | lined | dark | sepia
-    defaultFontSize: 32,     // 기본 글꼴 크기 (px)
-    revealMode: "sequential" // sequential(R키) | individual(터치)
+// ─── PASSAGE 1: Gateway ───
+window.LESSON_LIBRARY.push({
+  title: "수능특강 05과 Gateway — 빈칸추론",
+  chapter: "05과",
+  settings: { defaultBg: "white", defaultFontSize: 30 },
+
+  translation: [
+    { en: "First sentence of the passage.", ko: "지문의 첫 번째 문장." },
+    { en: "Second sentence.", ko: "두 번째 문장." }
+  ],
+
+  summary: {
+    topic: "비디오 게임이 진정한 학습 도구가 될 수 있다",
+    points: [
+      "흐름: 게임 편견 → 학습 잠재력 인식 → 교육적 활용 가능성",
+      "게임은 즉각적 피드백과 몰입을 통해 효과적 학습 유도",
+      "전통 교육이 놓치는 동기 부여 요소를 게임이 제공"
+    ]
   },
 
   slides: [
-    // ── 타이틀 ──
-    {
-      type: "title",
-      title: "메인 제목",
-      subtitle: "부제목 (유형명 등)"
-    },
-
-    // ── 지문 ──
+    { type: "title", title: "수능특강 05과 Gateway", subtitle: "빈칸추론" },
     {
       type: "passage",
       title: "Reading Passage",
-      content: "지문 전체를 한 줄 문자열로. 줄바꿈 없이.",
-      reveals: [
-        { start: 0, end: 128, label: "주제문" },
-        { start: 129, end: 280, label: "부연 설명 1" },
-        { start: 281, end: 430, label: "구체적 예시" }
-      ],
+      content: "We almost universally accept that playing video games is...",
       vocabulary: [
-        { word: "renewal", meaning: "갱신" },
-        { word: "infrastructure", meaning: "기반시설" }
+        { word: "universally", meaning: "보편적으로" },
+        { word: "inherently", meaning: "본질적으로" }
       ]
+      // reveals 없음
     },
-
-    // ── 문제 ──
     {
       type: "questions",
       title: "Comprehension Check",
       items: [
         {
-          question: "문제 텍스트",
+          question: "원본 문제: 빈칸에 들어갈 말로 가장 적절한 것은?",
           options: ["선지①", "선지②", "선지③", "선지④", "선지⑤"],
-          answer: 1,          // 0부터 시작! (1 = 두번째 선지)
-          explanation: "해설 (한국어)"
+          answer: 1,
+          explanation: "해설"
+        },
+        {
+          question: "변형 문제: 이 글의 주제로 가장 적절한 것은?",
+          options: ["선지①", "선지②", "선지③", "선지④", "선지⑤"],
+          answer: 3,
+          explanation: "해설"
         }
       ]
     },
-
-    // ── 문법 ──
     {
       type: "grammar",
-      title: "핵심 문법 — 주제",
+      title: "핵심 문법",
       points: [
         {
           rule: "문법 규칙 설명",
-          example: "예문 (지문에서 발췌)",
-          highlight: "강조할 단어"    // 예문 안에서 정확히 일치
+          example: "예문 (지문에서 그대로 발췌)",
+          highlight: "예문 내 verbatim 부분"   // ← example 안에 반드시 포함
         }
       ]
     },
-
-    // ── 핵심 문장 ──
     {
       type: "keysentence",
       title: "Key Sentences",
       sentences: [
         {
-          en: "영어 문장",
+          en: "지문에서 그대로 발췌한 문장",   // ← content에 verbatim
           ko: "한국어 해석",
-          grammar_note: "문법 포인트 (예: not A but B)"
+          grammar_note: "문법 포인트"
         }
       ]
     },
-
-    // ── 자유형 (토론/어휘표 등) ──
-    {
-      type: "freeform",
-      title: "제목",
-      html: "<div>HTML 내용</div>"
-    },
-
-    // ── 빈 화면 (필기용) ──
     { type: "blank" }
   ],
 
-  // 사이드 패널 보조자료 (선택)
   resources: [
     {
-      label: "단어 정리",
       type: "vocabulary",
       items: [
-        { word: "영단어", meaning: "뜻" }
+        { word: "universally", meaning: "보편적으로" },
+        { word: "inherently", meaning: "본질적으로" }
       ]
-    },
-    {
-      label: "문법 요약",
-      type: "html",
-      content: "<table>...</table>"
     }
   ]
-}); })();
+});
+
+// ─── PASSAGE 2: Ex01 ───
+window.LESSON_LIBRARY.push({ /* ... 동일 구조 ... */ });
+
+// (지문 수만큼 반복)
+
+})();
 ```
 
 ---
 
-## reveals 인덱스 계산 팁
+## ④ 파일 저장 및 등록
 
-`content` 문자열에서 각 구간의 시작/끝 인덱스를 정확히 계산해야 합니다.
+### lessons/ 폴더에 저장
 
-**방법 1**: 브라우저 콘솔에서 확인
-```javascript
-const text = "지문 전체...";
-console.log(text.indexOf("찾고 싶은 문장의 시작 단어"));
-console.log(text.indexOf("구간 끝 단어") + "구간 끝 단어".length);
+생성된 .js 파일을 `lessons/` 폴더에 저장:
+```
+whiteboard/
+  lessons/
+    sample_lesson.js
+    ch03_gist.js
+    ch05_blank.js    ← 새 파일 저장
 ```
 
-**방법 2**: Claude에게 직접 계산 요청
-프롬프트에 "reveals의 start/end 인덱스를 정확히 계산해줘"를 포함
+### index.html에 스크립트 태그 추가
 
----
-
-## 파일 교체 방법
-
-`whiteboard.html` 안에서 이 줄을 수정:
+`index.html` 파일 안에서 `<!-- LESSON LIBRARY -->` 블록 찾기:
 
 ```html
-<!-- 현재 -->
+<!-- LESSON LIBRARY -->
+<script>window.LESSON_LIBRARY = [];</script>
 <script src="lessons/sample_lesson.js"></script>
-
-<!-- 새 수업으로 변경 -->
-<script src="lessons/reading_L4_technology.js"></script>
+<script src="lessons/ch03_gist.js"></script>
+<script src="lessons/ch05_blank.js"></script>   <!-- ← 새 줄 추가 -->
 ```
 
-또는 같은 파일명(`sample_lesson.js`)을 덮어써도 됩니다.
+저장 후 브라우저에서 새로고침하면 레슨 목록에 자동 추가됨.
 
 ---
 
-## 슬라이드 타입 요약
+## ⑤ Spot-check 체크리스트 (5분)
+
+자동 검증 통과 후 브라우저에서 빠르게 확인:
+
+```
+□ 브라우저에서 새 레슨 로드 확인 (콘솔에 JS 에러 없음)
+□ 각 지문의 questions — 정답이 지문 내용과 실제로 일치하는지 확인
+□ vocabulary — 다른 지문 단어가 혼입되지 않았는지 훑어보기
+□ summary.topic — 지문 요지와 맞는지 한 줄 확인
+```
+
+---
+
+## 슬라이드 타입 참조
 
 | type | 용도 | 필수 필드 |
 |------|------|-----------|
-| `title` | 표지 | title, subtitle |
-| `passage` | 영어 지문 | content, reveals[], vocabulary[] |
-| `questions` | 문제 | items[{question, options[], answer, explanation}] |
-| `grammar` | 문법 | points[{rule, example, highlight}] |
-| `keysentence` | 핵심문장 | sentences[{en, ko, grammar_note}] |
-| `freeform` | 자유 HTML | html |
-| `image` | 이미지 | src, caption |
-| `blank` | 빈 화면 | (없음) |
+| `title` | 표지 | `title`, `subtitle` |
+| `passage` | 영어 지문 | `content`, `vocabulary[]` |
+| `questions` | 문제 | `items[{question, options[], answer, explanation}]` |
+| `grammar` | 문법 | `points[{rule, example, highlight}]` |
+| `keysentence` | 핵심문장 | `sentences[{en, ko, grammar_note}]` |
+| `freeform` | 자유 HTML | `html` |
+| `blank` | 빈 화면 (필기용) | (없음) |
+
+> **주의:** `reveals[]`는 사용하지 않음. passage 슬라이드에 포함하더라도 무시됨.

@@ -19,7 +19,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   --slide-bg: #ffffff; --slide-text: #0f172a; --slide-text-secondary: #475569;
   --toolbar-bg: rgba(15, 23, 42, 0.95); --toolbar-text: #e2e8f0;
   --toolbar-active: #7c3aed; --toolbar-hover: rgba(255,255,255,0.1);
-  --toolbar-height: 56px; --status-height: 28px; --panel-width: 340px;
+  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 560px);
   --touch-target: 56px;
 }
 
@@ -124,23 +124,41 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 #lesson-title-bar:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
 #lesson-title-bar::after { content: ' ▾'; font-size: 10px; opacity: 0.5; }
 .lnav-dropdown {
-  display: none; position: absolute; right: 0; top: 100%; margin-top: 6px;
+  display: none; flex-direction: column; position: absolute; right: 0; top: 100%; margin-top: 6px;
   background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-  min-width: 280px; max-height: 420px; overflow-y: auto; z-index: 3000;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5); padding: 6px;
+  width: 280px; max-height: 420px; overflow: hidden; z-index: 3000;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
-.lnav-dropdown.open { display: block; }
-.lnav-group-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #64748b;
-  padding: 8px 12px 4px; font-weight: 700;
+.lnav-dropdown.open { display: flex; }
+.lnav-search-wrap { flex-shrink: 0; padding: 6px 6px 4px; }
+.lnav-items { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding: 0 2px 4px; }
+.lnav-search {
+  width: 100%; box-sizing: border-box; background: #0f172a; border: 1px solid #334155;
+  border-radius: 6px; color: #e2e8f0; font-size: 12px; padding: 6px 10px;
+  outline: none; font-family: inherit;
 }
+.lnav-search:focus { border-color: #7c3aed; }
+.lnav-search::placeholder { color: #475569; }
 .lnav-item {
   display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px;
   cursor: pointer; color: #cbd5e1; font-size: 13px; transition: background 0.1s;
 }
 .lnav-item:hover { background: rgba(124,58,237,0.15); color: #e2e8f0; }
 .lnav-item.active { background: rgba(124,58,237,0.2); color: #a78bfa; font-weight: 600; }
-.lnav-item .lnav-slides { font-size: 11px; color: #64748b; margin-left: auto; }
+.lnav-arrow {
+  font-size: 9px; color: #64748b; flex-shrink: 0; width: 12px; text-align: center;
+  display: inline-block; transition: transform 0.15s;
+}
+.lnav-item.expanded .lnav-arrow { transform: rotate(90deg); }
+.lnav-sub-list { padding: 0 0 2px; }
+.lnav-sub-item {
+  display: block; padding: 5px 12px 5px 28px; cursor: pointer;
+  color: #94a3b8; font-size: 12px; border-radius: 5px; transition: background 0.1s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lnav-sub-item::before { content: '–'; color: #334155; margin-right: 6px; }
+.lnav-sub-item:hover { background: rgba(124,58,237,0.1); color: #c4b5fd; }
+.lnav-sub-item.current-slide { color: #a78bfa; font-weight: 500; }
 .lnav-empty { padding: 20px; text-align: center; color: #64748b; font-size: 13px; }
 .lnav-footer { border-top: 1px solid #334155; padding: 6px; margin-top: 4px; }
 .lnav-footer button {
@@ -148,6 +166,18 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   background: rgba(124,58,237,0.15); color: #a78bfa; font-size: 13px; font-family: inherit;
 }
 .lnav-footer button:hover { background: rgba(124,58,237,0.25); }
+.lnav-rename-btn {
+  opacity: 0.3; background: none; border: none; cursor: pointer; padding: 2px 4px;
+  font-size: 12px; color: #64748b; border-radius: 4px; margin-left: auto;
+  transition: opacity 0.15s; flex-shrink: 0;
+}
+.lnav-item:hover .lnav-rename-btn { opacity: 1; }
+.lnav-item.active .lnav-rename-btn { opacity: 0.5; }
+.lnav-rename-btn:hover { background: rgba(124,58,237,0.2); color: #a78bfa; }
+.lnav-rename-input {
+  flex: 1; background: #0f172a; border: 1px solid #7c3aed; border-radius: 4px;
+  color: #e2e8f0; font-size: 13px; padding: 2px 6px; outline: none; font-family: inherit;
+}
 
 /* ===== SLIDE CONTAINER ===== */
 #slide-container {
@@ -158,7 +188,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 .slide {
-  min-width: 100%; height: 100%; padding: 40px 60px; overflow-y: auto;
+  min-width: 100%; height: 100%; padding: 40px 60px 80px; overflow-y: auto;
   display: flex; flex-direction: column;
   scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
 }
@@ -170,7 +200,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .slide-title-page {
   justify-content: center; align-items: center; text-align: center; gap: 16px;
 }
-.slide-title-page h1 { font-size: 2.8em; font-weight: 800; letter-spacing: -1px; line-height: 1.2; }
+.slide-title-page h1 { font-size: 1.8em; font-weight: 800; letter-spacing: -1px; line-height: 1.2; word-break: keep-all; overflow-wrap: break-word; }
 .slide-title-page .subtitle {
   font-size: 1.3em; color: var(--slide-text-secondary); font-weight: 400;
 }
@@ -329,6 +359,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.1);
 }
 #side-panel.open { transform: translateX(0); }
+#side-panel.resizing { transition: none; }
+#panel-resize-handle {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  cursor: col-resize; z-index: 10;
+}
+#panel-resize-handle::after {
+  content: ''; position: absolute; inset: 0; transition: background 0.15s;
+}
+#panel-resize-handle:hover::after { background: rgba(124, 58, 237, 0.18); }
+#panel-resize-handle.dragging::after { background: rgba(124, 58, 237, 0.3); }
+body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user-select: none !important; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700;
@@ -340,7 +381,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   color: var(--text-secondary); font-size: 20px;
 }
 .panel-close:hover { background: var(--surface-muted); }
-.panel-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.panel-body { flex: 1; overflow-y: auto; padding: 16px 20px 80px; }
 .panel-section { margin-bottom: 24px; }
 .panel-section-title {
   font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
@@ -349,6 +390,55 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .panel-vocab-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--surface-muted); }
 .panel-vocab-word { font-weight: 600; }
 .panel-vocab-meaning { color: var(--text-secondary); }
+.panel-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.panel-tab {
+  flex: 1; padding: 10px 4px; border: none; background: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.panel-tab:hover { color: var(--text-primary); background: var(--surface-muted); }
+.panel-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+.theme-dark .panel-tabs { border-bottom-color: #2a2a40; }
+.theme-dark .panel-tab { color: #9e9eb8; }
+.theme-dark .panel-tab:hover { background: #141420; color: #e0e0e0; }
+.theme-dark .panel-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
+
+/* ===== PANEL CONTENT ===== */
+.panel-empty { text-align: center; color: var(--text-muted); padding: 32px 16px; font-size: 13px; }
+.translation-ko { font-size: 14px; line-height: 1.9; color: var(--text-primary); }
+.summary-block { padding: 0; }
+/* 헤더: 영어 제목 + 한국어 주제문 */
+.summary-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.summary-title-en { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+.summary-title-ko { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+/* 논리 흐름: 단일 회색 바 */
+.summary-flow-bar { background: var(--surface-muted); border-radius: 8px; padding: 7px 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+/* 핵심 포인트: 테이블형 (텍스트 라벨 + 행 구분선) */
+.summary-points { display: flex; flex-direction: column; margin-bottom: 12px; }
+.summary-point-row { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--surface-muted); }
+.summary-point-row:last-child { border-bottom: none; }
+.summary-point-label { font-size: 11px; font-weight: 700; min-width: 28px; flex-shrink: 0; white-space: nowrap; }
+.summary-point-label[data-pos="0"] { color: #475569; }
+.summary-point-label[data-pos="1"] { color: #6d28d9; }
+.summary-point-label[data-pos="2"] { color: #0d9488; }
+.summary-point-label[data-pos="3"] { color: #d97706; }
+.summary-point-text { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+/* 핵심 문장 */
+.summary-quote { border-left: 3px solid var(--purple); padding: 8px 12px; background: var(--surface-muted); border-radius: 0 6px 6px 0; margin-bottom: 12px; }
+.summary-quote-text { font-size: 12.5px; font-style: italic; color: var(--text-secondary); line-height: 1.6; }
+/* 하단 어휘 인라인 */
+.summary-vocab-inline { font-size: 12px; color: var(--text-muted); padding-top: 10px; border-top: 1px solid var(--surface-muted); line-height: 1.8; }
+.summary-vocab-inline .sv { font-weight: 600; color: var(--text-secondary); }
+/* 다크 모드 */
+.theme-dark .summary-title-ko { color: #9e9eb8; }
+.theme-dark .summary-flow-bar { background: #141420; color: #9e9eb8; }
+.theme-dark .summary-point-row { border-bottom-color: #141420; }
+.theme-dark .summary-point-label[data-pos="0"] { color: #94a3b8; }
+.theme-dark .summary-point-label[data-pos="1"] { color: #c4b5fd; }
+.theme-dark .summary-point-label[data-pos="2"] { color: #5eead4; }
+.theme-dark .summary-point-label[data-pos="3"] { color: #fdba74; }
+.theme-dark .summary-quote { background: #141420; }
+.theme-dark .summary-vocab-inline { border-top-color: #141420; }
 
 /* ===== STATUS BAR ===== */
 #status-bar {
@@ -444,6 +534,31 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .lm-list-btn.delete:hover { background: #fee2e2; color: #dc2626; }
 .lm-empty { text-align: center; padding: 40px 20px; color: var(--text-muted, #94a3b8); font-size: 14px; }
 
+/* ===== CLEAR PAGE CONFIRM MODAL ===== */
+#cp-modal {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
+}
+#cp-modal.open { display: flex; }
+.cp-dialog {
+  background: var(--surface, #fff); color: var(--slide-text, #0f172a);
+  border-radius: 14px; width: 340px; max-width: 90vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  padding: 24px 24px 20px; display: flex; flex-direction: column; gap: 10px;
+}
+.cp-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.cp-desc { font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.6; }
+.cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.cp-btn {
+  padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.15s;
+}
+.cp-btn-cancel { background: var(--surface-muted, #f1f5f9); color: var(--text-secondary, #475569); }
+.cp-btn-cancel:hover { background: var(--border, #e2e8f0); }
+.cp-btn-danger { background: #dc2626; color: #fff; }
+.cp-btn-danger:hover { filter: brightness(1.1); }
+
 /* ===== SORT BAR & MULTI-SELECT ===== */
 .lm-sort-bar {
   display: flex; align-items: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
@@ -525,7 +640,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 /* ===== MISC ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @media (max-width: 800px) {
-  .slide { padding: 24px 20px; }
+  .slide { padding: 24px 20px 80px; }
   #toolbar { padding: 0 6px; gap: 2px; }
   .tool-btn { min-width: 44px; height: 44px; padding: 0 6px; font-size: 11px; }
 }
@@ -733,6 +848,9 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
       <button class="tool-btn" id="btn-fullscreen" title="전체화면 (F11)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
+      <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기" style="color:#ef4444">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
       <button class="tool-btn" id="btn-lesson-mgr" title="수업 관리 (L)" style="font-size:15px">📚</button>
     </div>
     <div id="lesson-nav-wrap">
@@ -806,9 +924,15 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 
   <!-- SIDE PANEL -->
   <div id="side-panel">
+    <div id="panel-resize-handle"></div>
     <div class="panel-header">
       <span>자료</span>
       <button class="panel-close" id="panel-close-btn">&times;</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="vocab">핵심 단어</button>
+      <button class="panel-tab" data-tab="translation">한국어 해석</button>
+      <button class="panel-tab" data-tab="summary">내용 정리</button>
     </div>
     <div class="panel-body" id="panel-body"></div>
   </div>
@@ -849,20 +973,26 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
           <div class="lm-label">수업 데이터 붙여넣기</div>
           <textarea class="lm-textarea" id="lm-paste" placeholder='Claude가 만들어준 코드를 여기에 붙여넣으세요.
 
-window.LESSON_DATA = {
-  title: "...",
-  slides: [...]
-};
+;(function(){ window.LESSON_LIBRARY = window.LESSON_LIBRARY || [];
+window.LESSON_LIBRARY.push({
+  "title": "수특독해연습 3강",
+  "exercises": [
+    { "id": "Ex01", "subtitle": "지문 제목", "translation": [...], "summary": {...} }
+  ],
+  "slides": [
+    { "type": "title", ... },
+    { "type": "passage", "exercise_idx": 0, ... },
+    ...
+  ]
+});
+})();
 
-또는 JSON 형식도 됩니다:
-{
-  "title": "...",
-  "slides": [...]
-}'></textarea>
+또는 순수 JSON 형식도 됩니다:
+{ "title": "...", "exercises": [...], "slides": [...] }'></textarea>
           <div class="lm-hint">
-            💡 Claude Cowork에 PDF를 올리고 "양영 화이트보드 JS로 만들어줘"라고 하면 자동 생성됩니다.<br>
-            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK (LESSON_LIBRARY 형식)<br>
-            &nbsp;&nbsp;&nbsp;• <code>window.LESSON_DATA = {...}</code> 형식 OK<br>
+            💡 Claude Code에서 <code>/generate-lesson</code> 명령으로 자동 생성됩니다.<br>
+            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK<br>
+            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 (exercises[] 포함)<br>
             &nbsp;&nbsp;&nbsp;• 순수 JSON <code>{...}</code> 형식 OK
           </div>
           <div class="lm-actions">
@@ -876,7 +1006,7 @@ window.LESSON_DATA = {
             <button class="lm-sort-btn active" data-sort="date-desc">최신순</button>
             <button class="lm-sort-btn" data-sort="date-asc">오래된순</button>
             <button class="lm-sort-btn" data-sort="name-asc">이름순</button>
-            <button class="lm-sort-btn" data-sort="slides-desc">슬라이드 수</button>
+            <button class="lm-sort-btn" data-sort="slides-desc">지문·슬라이드 수</button>
           </div>
           <ul class="lm-list" id="lm-saved-list"></ul>
           <div class="lm-bulk-bar hidden" id="lm-bulk-bar">
@@ -903,11 +1033,28 @@ window.LESSON_DATA = {
   <div class="lm-toast" id="lm-toast"></div>
 </div>
 
+<!-- CLEAR PAGE CONFIRM MODAL -->
+<div id="cp-modal">
+  <div class="cp-dialog">
+    <div class="cp-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" width="18" height="18"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      현재 슬라이드 지우기
+    </div>
+    <div class="cp-desc">이 슬라이드의 모든 필기·밑줄이 삭제됩니다.<br>이 작업은 되돌릴 수 없습니다.</div>
+    <div class="cp-actions">
+      <button class="cp-btn cp-btn-cancel" id="cp-cancel">취소</button>
+      <button class="cp-btn cp-btn-danger" id="cp-confirm">지우기</button>
+    </div>
+  </div>
+</div>
+
 <!-- LESSON LIBRARY: 수업 파일들 (lessons/ 폴더의 .js 파일 추가) -->
 <script>window.LESSON_LIBRARY = [];</script>
 <script src="lessons/sample_lesson.js"></script>
 <script src="lessons/ch03_gist.js"></script>
 <script src="lessons/ch04_claim.js"></script>
+<script src="lessons/yder_ch03.js"></script>
+<script src="lessons/yder_ch04.js"></script>
 <script src="lessons/march25_types.js"></script>
 
 <script>
@@ -926,6 +1073,7 @@ const STATE = {
   toolbarVisible: true,
   toolbarTimer: null,
   panelOpen: false,
+  panelTab: 'vocab',
   fullscreen: false,
   fontSize: 32,
   bgIndex: 0,
@@ -1318,15 +1466,14 @@ function wrapSentences(escapedText) {
 const RENDERERS = {
   title(el, data) {
     el.classList.add('slide-title-page');
-    el.innerHTML = `
-      <h1>${esc(data.title || '')}</h1>
-      <div class="accent-line"></div>
-      ${data.subtitle ? `<div class="subtitle">${esc(data.subtitle)}</div>` : ''}
-    `;
+    const lesson = STATE.lesson;
+    const titleText = (lesson && lesson.title) || data.title || '';
+    el.innerHTML = `<h1>${esc(titleText)}</h1>`;
   },
 
   passage(el, data, idx) {
-    let html = `<div class="slide-header">${esc(data.title || 'Passage')}</div>`;
+    const exLabel = data.exercise_idx !== undefined ? `Ex${String(data.exercise_idx + 1).padStart(2, '0')} · ` : '';
+    let html = `<div class="slide-header">${exLabel}${esc(data.title || 'Passage')}</div>`;
     let content = data.content || '';
     let result = wrapSentences(esc(content));
 
@@ -1438,28 +1585,85 @@ const RENDERERS = {
 };
 
 // ===== SIDE PANEL =====
+function getCurrentExercise() {
+  const lesson = STATE.lesson;
+  if (!lesson || !lesson.exercises) return null;
+  const slide = lesson.slides && lesson.slides[STATE.currentSlide];
+  if (!slide || slide.exercise_idx === undefined) return null;
+  return lesson.exercises[slide.exercise_idx] || null;
+}
+
 function renderPanel() {
   const body = $('#panel-body');
-  const resources = STATE.lesson.resources || [];
-  if (!resources.length) {
-    body.innerHTML = '<p style="color:var(--text-muted);font-size:14px">등록된 자료가 없습니다.</p>';
-    return;
-  }
-  let html = '';
-  resources.forEach(r => {
-    html += `<div class="panel-section"><div class="panel-section-title">${esc(r.label || '')}</div>`;
-    if (r.type === 'vocabulary' && r.items) {
-      r.items.forEach(v => {
+  const tab = STATE.panelTab;
+
+  $$('.panel-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+
+  const ex = getCurrentExercise();
+
+  if (tab === 'vocab') {
+    const resources = ((ex && ex.resources) || STATE.lesson.resources || []).filter(r => r.type === 'vocabulary');
+    if (!resources.length) {
+      body.innerHTML = '<p style="color:var(--text-muted);font-size:14px">등록된 핵심 단어가 없습니다.</p>';
+      return;
+    }
+    let html = '';
+    resources.forEach(r => {
+      (r.items || []).forEach(v => {
         html += `<div class="panel-vocab-item"><span class="panel-vocab-word">${esc(v.word)}</span><span class="panel-vocab-meaning">${esc(v.meaning)}</span></div>`;
       });
-    } else if (r.type === 'html') {
-      html += r.content || '';
-    } else if (r.type === 'image') {
-      html += `<img src="${esc(r.src || '')}" style="max-width:100%;border-radius:8px" alt="">`;
+    });
+    body.innerHTML = html;
+
+  } else if (tab === 'translation') {
+    const pairs = (ex && ex.translation) || STATE.lesson.translation;
+    if (!pairs || !pairs.length) {
+      body.innerHTML = '<p class="panel-empty">번역 데이터 없음</p>';
+      return;
     }
-    html += '</div>';
-  });
-  body.innerHTML = html;
+    body.innerHTML = `<div class="translation-ko">${esc(pairs.map(p => p.ko).join(' '))}</div>`;
+
+  } else if (tab === 'summary') {
+    const s = (ex && ex.summary) || STATE.lesson.summary;
+    if (!s) {
+      body.innerHTML = '<p class="panel-empty">내용 정리 데이터 없음</p>';
+      return;
+    }
+    /* ── 헤더: 영어 제목 + 한국어 주제문 ── */
+    const titleEn = (ex && ex.subtitle) || '';
+    const headerHtml = `<div class="summary-header">${
+      titleEn ? `<div class="summary-title-en">${esc(titleEn)}</div>` : ''
+    }${s.title_ko ? `<div class="summary-title-ko">${esc(s.title_ko)}</div>` : ''
+    }</div>`;
+    /* ── 논리 흐름: 단일 바 ── */
+    const flowHtml = (s.flow && s.flow.length)
+      ? `<div class="summary-flow-bar">${s.flow.map(esc).join(' → ')}</div>`
+      : '';
+    /* ── 핵심 포인트 ── */
+    const pointsHtml = (s.points && s.points.length)
+      ? `<div class="summary-points">${s.points.map((pt, i) => {
+          const label = typeof pt === 'object' ? (pt.label || '') : '';
+          const text  = typeof pt === 'object' ? (pt.text  || '') : pt;
+          return `<div class="summary-point-row">${
+            label ? `<span class="summary-point-label" data-pos="${i}">${esc(label)}</span>` : ''
+          }<span class="summary-point-text">${esc(text)}</span></div>`;
+        }).join('')}</div>`
+      : '';
+    /* ── 핵심 문장 ── */
+    const quoteHtml = s.quote
+      ? `<div class="summary-quote"><div class="summary-quote-text">❝ ${esc(s.quote)}</div></div>`
+      : '';
+    /* ── 하단 어휘 인라인 ── */
+    const vocabItems = ((ex && ex.resources) || STATE.lesson.resources || [])
+      .filter(r => r.type === 'vocabulary')
+      .flatMap(r => r.items || []);
+    const vocabHtml = vocabItems.length
+      ? `<div class="summary-vocab-inline">${
+          vocabItems.map(v => `<span class="sv">${esc(v.word)}</span> ${esc(v.meaning)}`).join('&ensp;&ensp;')
+        }</div>`
+      : '';
+    body.innerHTML = `<div class="summary-block">${headerHtml}${flowHtml}${pointsHtml}${quoteHtml}${vocabHtml}</div>`;
+  }
 }
 
 // ===== NAVIGATION =====
@@ -1615,6 +1819,19 @@ function onPointerDown(e) {
     return;
   }
 
+  // Text-following eraser: if eraser tool over highlighted sentence, remove CSS highlight
+  if (STATE.drawingMode === 'eraser') {
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent && sent.classList.contains('text-hl')) {
+        sent.classList.remove('text-hl');
+        STATE.textErasing = true;
+        return;
+      }
+    }
+  }
+
   // Text-following highlighter: if highlighter tool over passage text, apply CSS highlight
   if (STATE.drawingMode === 'highlighter') {
     const hitEl = hitTestThrough(e.clientX, e.clientY);
@@ -1660,6 +1877,16 @@ function onPointerMove(e) {
     }
     return;
   }
+  // Text-following eraser: remove CSS highlight on dragged sentences
+  if (STATE.textErasing && STATE.drawingMode === 'eraser') {
+    e.preventDefault();
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent) sent.classList.remove('text-hl');
+    }
+    return;
+  }
   // Text-following highlighter: highlight sentences as pointer drags over them
   if (STATE.textHighlighting && STATE.drawingMode === 'highlighter') {
     e.preventDefault();
@@ -1693,6 +1920,7 @@ function onPointerUp(e) {
     STATE.currentStroke = null;
     return;
   }
+  if (STATE.textErasing) { STATE.textErasing = false; return; }
   if (STATE.textHighlighting) { STATE.textHighlighting = false; return; }
   if (!STATE.isDrawing) return;
   STATE.isDrawing = false;
@@ -1869,6 +2097,7 @@ function resetToolbarTimer() {
   clearTimeout(STATE.toolbarTimer);
   STATE.toolbarTimer = setTimeout(() => {
     if (STATE.drawingMode !== 'navigate') return;
+    if ($('#lesson-nav-dropdown').classList.contains('open')) return;
     toolbar.classList.add('hidden');
     STATE.toolbarVisible = false;
   }, 6000);
@@ -1906,6 +2135,50 @@ function setupEvents() {
   $('#btn-panel').addEventListener('click', togglePanel);
   $('#btn-fullscreen').addEventListener('click', toggleFullscreen);
   $('#panel-close-btn').addEventListener('click', togglePanel);
+  $$('.panel-tab').forEach(btn => btn.addEventListener('click', () => {
+    STATE.panelTab = btn.dataset.tab;
+    renderPanel();
+  }));
+
+  // ── 사이드 패널 너비 조절 (최초 init() 1회만 등록) ──
+  if (!window._panelResizeSetup) {
+    window._panelResizeSetup = true;
+    const handle = $('#panel-resize-handle');
+    const panel  = $('#side-panel');
+    const MIN_W  = 240, MAX_W = 560;
+    let startX = 0, startW = 0, dragging = false;
+
+    // 저장된 너비 복원 (페이지 로드 시 1회)
+    const saved = localStorage.getItem('wb-panel-width');
+    if (saved) document.documentElement.style.setProperty('--panel-width', saved);
+
+    handle.addEventListener('pointerdown', e => {
+      dragging = true;
+      startX = e.clientX;
+      startW = panel.getBoundingClientRect().width;
+      handle.setPointerCapture(e.pointerId);
+      handle.classList.add('dragging');
+      panel.classList.add('resizing');
+      document.body.classList.add('panel-resizing');
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
+      document.documentElement.style.setProperty('--panel-width', Math.round(w) + 'px');
+    });
+    const endDrag = e => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      panel.classList.remove('resizing');
+      document.body.classList.remove('panel-resizing');
+      const w = getComputedStyle(document.documentElement).getPropertyValue('--panel-width').trim();
+      localStorage.setItem('wb-panel-width', w);
+    };
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+  }
 
   // Nav touch zones
   $('#nav-prev').addEventListener('click', prevSlide);
@@ -1945,6 +2218,10 @@ function setupEvents() {
 }
 
 function handleKey(e) {
+  // Ignore key events when user is typing in an input or textarea
+  const activeTag = document.activeElement && document.activeElement.tagName;
+  if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
   // Blackout: any key dismisses
   if (STATE.blackout && e.key !== 'F5') {
     e.preventDefault();
@@ -1994,6 +2271,7 @@ function handleKey(e) {
   // Escape
   if (key === 'Escape') {
     if (STATE.paletteLevel > 0) { collapsePalette(); return; }
+    if ($('#cp-modal').classList.contains('open')) { closeClearPageModal(); return; }
     if ($('#lesson-modal').classList.contains('open')) { closeLessonModal(); return; }
     if (STATE.panelOpen) { togglePanel(); return; }
     if (STATE.drawingMode !== 'navigate') { setTool('navigate'); return; }
@@ -2123,6 +2401,23 @@ function closeLessonModal() {
   $('#lesson-modal').classList.remove('open');
 }
 
+// ===== CLEAR PAGE =====
+function clearPage() {
+  const idx = STATE.currentSlide;
+  STATE.slideDrawings[idx] = [];
+  STATE.undoStack[idx] = [];
+  redrawCanvas(idx);
+  const slideEl = slideTrack.children[idx];
+  if (slideEl) {
+    slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
+    slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
+    const ta = slideEl.querySelector(`textarea[data-notes-slide="${idx}"]`);
+    if (ta) { ta.value = ''; delete notesStore[idx]; }
+  }
+}
+function openClearPageModal() { $('#cp-modal').classList.add('open'); }
+function closeClearPageModal() { $('#cp-modal').classList.remove('open'); }
+
 function activateLmTab(tab) {
   $$('.lm-tab').forEach(t => t.classList.toggle('active', t.dataset.lmTab === tab));
   $$('.lm-section').forEach(s => s.classList.remove('active'));
@@ -2151,7 +2446,10 @@ function renderSavedList() {
     switch (lmSortMode) {
       case 'date-asc':   return (ia.savedAt || 0) - (ib.savedAt || 0);
       case 'name-asc':   return ((ia.data && ia.data.title) || a).localeCompare((ib.data && ib.data.title) || b, 'ko');
-      case 'slides-desc': return ((ib.data && ib.data.slides && ib.data.slides.length) || 0) - ((ia.data && ia.data.slides && ia.data.slides.length) || 0);
+      case 'slides-desc': {
+        const countOf = d => (d.data && d.data.exercises && d.data.exercises.length) || (d.data && d.data.slides && d.data.slides.length) || 0;
+        return countOf(ib) - countOf(ia);
+      }
       default:           return (ib.savedAt || 0) - (ia.savedAt || 0);
     }
   });
@@ -2161,13 +2459,15 @@ function renderSavedList() {
     const item = store[k];
     const d = item.savedAt ? new Date(item.savedAt) : null;
     const dateStr = d ? `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}` : '';
+    const exercises = (item.data && item.data.exercises && item.data.exercises.length) || 0;
     const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
+    const countStr = exercises > 0 ? `${exercises}개 지문` : `${slides}개 슬라이드`;
     const isCurrent = k === currentId;
     return `<li${isCurrent ? ' style="background:rgba(124,58,237,0.08)"' : ''}>
       <input type="checkbox" class="lm-list-check" data-check-id="${esc(k)}" title="선택">
       <div class="lm-list-info" data-lesson-id="${esc(k)}">
         <div class="lm-list-title">${isCurrent ? '▶ ' : ''}${esc((item.data && item.data.title) || k)}</div>
-        <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${slides}개 슬라이드 · ${dateStr}</div>
+        <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${countStr} · ${dateStr}</div>
       </div>
       <div class="lm-list-actions">
         <button class="lm-list-btn delete" data-delete-id="${esc(k)}" title="삭제">🗑</button>
@@ -2367,83 +2667,193 @@ function extractChapter(title) {
   return null;
 }
 
+const lnavExpanded = new Set();
+
+function buildLnavSubItems(data) {
+  const items = [];
+  const slides = data.slides || [];
+  if (data.exercises && data.exercises.length > 0) {
+    data.exercises.forEach((ex, ei) => {
+      const slideIdx = slides.findIndex(s => s.type === 'passage' && s.exercise_idx === ei);
+      const label = [ex.id, ex.subtitle].filter(Boolean).join(' · ');
+      items.push({ label, slideIdx: slideIdx >= 0 ? slideIdx : -1 });
+    });
+  } else {
+    slides.forEach((s, i) => {
+      if (s.type === 'passage') items.push({ label: s.title || 'Passage', slideIdx: i });
+    });
+  }
+  return items;
+}
+
+let lnavSearchQuery = '';
+
+function renderLessonNavItems(dd) {
+  let itemsEl = dd.querySelector('.lnav-items');
+  if (!itemsEl) {
+    itemsEl = document.createElement('div');
+    itemsEl.className = 'lnav-items';
+    dd.appendChild(itemsEl);
+
+    // Delegated listener registered ONCE on itemsEl creation
+    itemsEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const curId = getCurrentLessonId();
+
+      // ▶ arrow: toggle only
+      const arrow = e.target.closest('.lnav-arrow');
+      if (arrow) {
+        const id = arrow.dataset.arrowId;
+        if (lnavExpanded.has(id)) lnavExpanded.delete(id); else lnavExpanded.add(id);
+        renderLessonNavItems(dd);
+        return;
+      }
+
+      // ✏️ rename
+      const renameBtn = e.target.closest('.lnav-rename-btn');
+      if (renameBtn) {
+        const id = renameBtn.dataset.renameId;
+        const storeItem = getLessonStore()[id];
+        const currentTitle = (storeItem && storeItem.data && storeItem.data.title) || id;
+        const lnavItem = renameBtn.closest('.lnav-item');
+        const inp = document.createElement('input');
+        inp.className = 'lnav-rename-input';
+        inp.value = currentTitle;
+        lnavItem.innerHTML = '';
+        lnavItem.appendChild(inp);
+        inp.focus();
+        inp.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          renameLessonInStore(id, inp.value.trim() || currentTitle);
+        };
+        inp.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+          if (ev.key === 'Escape') { committed = true; renderLessonNav(); }
+        });
+        inp.addEventListener('blur', commit);
+        return;
+      }
+
+      // Sub-item: jump to slide
+      const subItem = e.target.closest('.lnav-sub-item');
+      if (subItem) {
+        const id = subItem.dataset.subId;
+        const slideIdx = parseInt(subItem.dataset.slideIdx);
+        if (id !== curId) {
+          const storeItem = getLessonStore()[id];
+          if (storeItem && storeItem.data) { loadLessonData(storeItem.data); setCurrentLessonId(id); }
+        }
+        if (slideIdx >= 0) goToSlide(slideIdx);
+        closeLessonNav();
+        return;
+      }
+
+      // Manage button
+      if (e.target.closest('.lnav-manage-btn')) { closeLessonNav(); openLessonModal(); return; }
+
+      // Lesson row: load lesson
+      const item = e.target.closest('.lnav-item');
+      if (item) {
+        const id = item.dataset.navId;
+        if (id !== curId) {
+          const storeItem = getLessonStore()[id];
+          if (storeItem && storeItem.data) {
+            loadLessonData(storeItem.data);
+            setCurrentLessonId(id);
+            lnavExpanded.add(id);
+            renderLessonNavItems(dd);
+          }
+        }
+      }
+    });
+  }
+
+  // Re-render HTML only (listener already set up)
+  const store = getLessonStore();
+  const keys = Object.keys(store).sort((a, b) => (store[a].savedAt || 0) - (store[b].savedAt || 0));
+  const currentId = getCurrentLessonId();
+
+  function renderItem(id, item) {
+    const active = id === currentId ? ' active' : '';
+    const isExpanded = lnavExpanded.has(id);
+    const expandedCls = isExpanded ? ' expanded' : '';
+    const title = (item.data && item.data.title) || id;
+
+    let subHtml = '';
+    if (isExpanded && item.data) {
+      const subItems = buildLnavSubItems(item.data);
+      if (subItems.length > 0) {
+        const curSlide = id === currentId ? STATE.currentSlide : -1;
+        subHtml = `<div class="lnav-sub-list">` +
+          subItems.map(({ label, slideIdx }) => {
+            const cur = slideIdx >= 0 && slideIdx === curSlide ? ' current-slide' : '';
+            return `<div class="lnav-sub-item${cur}" data-sub-id="${esc(id)}" data-slide-idx="${slideIdx}">${esc(label)}</div>`;
+          }).join('') +
+        `</div>`;
+      }
+    }
+
+    return `<div class="lnav-item${active}${expandedCls}" data-nav-id="${esc(id)}">
+      <span class="lnav-arrow" data-arrow-id="${esc(id)}">▶</span>
+      <span class="lnav-item-title">${esc(title)}</span>
+      <button class="lnav-rename-btn" data-rename-id="${esc(id)}" title="제목 수정">✏️</button>
+    </div>${subHtml}`;
+  }
+
+  const q = lnavSearchQuery.trim().toLowerCase();
+  const filtered = q
+    ? keys.filter(k => ((store[k].data && store[k].data.title) || k).toLowerCase().includes(q))
+    : keys;
+
+  let html = '';
+  if (keys.length === 0) {
+    html = '<div class="lnav-empty">저장된 수업이 없습니다.<br>📚 버튼으로 수업을 추가하세요.</div>';
+  } else {
+    filtered.forEach(k => { html += renderItem(k, store[k]); });
+  }
+  html += '<div class="lnav-footer"><button class="lnav-manage-btn">📚 수업 관리 열기</button></div>';
+  itemsEl.innerHTML = html;
+}
+
 function renderLessonNav() {
   const dd = $('#lesson-nav-dropdown');
   const store = getLessonStore();
   const keys = Object.keys(store).sort((a, b) => (store[a].savedAt || 0) - (store[b].savedAt || 0));
   const currentId = getCurrentLessonId();
 
-  if (keys.length === 0) {
-    dd.innerHTML = '<div class="lnav-empty">저장된 수업이 없습니다.<br>📚 버튼으로 수업을 추가하세요.</div>';
-    dd.innerHTML += '<div class="lnav-footer"><button id="lnav-manage">📚 수업 관리 열기</button></div>';
-    dd.querySelector('#lnav-manage').addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
-    return;
-  }
+  if (currentId) lnavExpanded.add(currentId);
 
-  // Group by chapter
-  const groups = {};
-  const noGroup = [];
-  keys.forEach(k => {
-    const item = store[k];
-    const title = (item.data && item.data.title) || k;
-    const ch = (item.data && item.data.chapter) || extractChapter(title);
-    if (ch) {
-      if (!groups[ch]) groups[ch] = [];
-      groups[ch].push({ id: k, item });
-    } else {
-      noGroup.push({ id: k, item });
-    }
-  });
+  // Build skeleton once (search stays in DOM across re-renders)
+  if (!dd.querySelector('.lnav-search-wrap')) {
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'lnav-search-wrap';
+    searchWrap.innerHTML = '<input class="lnav-search" type="text" placeholder="수업 검색...">';
+    dd.appendChild(searchWrap);
 
-  let html = '';
-  const groupKeys = Object.keys(groups);
-  // If only one group or no groups, skip group labels
-  const showGroups = groupKeys.length > 1 || (groupKeys.length === 1 && noGroup.length > 0);
-
-  groupKeys.forEach(ch => {
-    if (showGroups) html += `<div class="lnav-group-label">${esc(ch)}</div>`;
-    groups[ch].forEach(({ id, item }) => {
-      const active = id === currentId ? ' active' : '';
-      const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
-      const title = (item.data && item.data.title) || id;
-      html += `<div class="lnav-item${active}" data-nav-id="${esc(id)}">
-        <span>${esc(title)}</span>
-        <span class="lnav-slides">${slides}슬라이드</span>
-      </div>`;
+    const searchEl = searchWrap.querySelector('.lnav-search');
+    searchEl.addEventListener('compositionend', (e) => {
+      lnavSearchQuery = e.target.value;
+      renderLessonNavItems(dd);
     });
-  });
-
-  if (noGroup.length) {
-    if (showGroups) html += `<div class="lnav-group-label">기타</div>`;
-    noGroup.forEach(({ id, item }) => {
-      const active = id === currentId ? ' active' : '';
-      const slides = (item.data && item.data.slides && item.data.slides.length) || 0;
-      const title = (item.data && item.data.title) || id;
-      html += `<div class="lnav-item${active}" data-nav-id="${esc(id)}">
-        <span>${esc(title)}</span>
-        <span class="lnav-slides">${slides}슬라이드</span>
-      </div>`;
+    searchEl.addEventListener('input', (e) => {
+      if (e.isComposing) return;
+      lnavSearchQuery = e.target.value;
+      renderLessonNavItems(dd);
+    });
+    searchEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { lnavSearchQuery = ''; closeLessonNav(); }
+      e.stopPropagation();
     });
   }
 
-  html += '<div class="lnav-footer"><button id="lnav-manage">📚 수업 관리 열기</button></div>';
-  dd.innerHTML = html;
+  // Sync search value if cleared externally
+  const searchEl = dd.querySelector('.lnav-search');
+  if (searchEl && searchEl.value !== lnavSearchQuery) searchEl.value = lnavSearchQuery;
 
-  // Event listeners
-  dd.querySelectorAll('.lnav-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.navId;
-      const item = getLessonStore()[id];
-      if (item && item.data) {
-        loadLessonData(item.data);
-        setCurrentLessonId(id);
-        closeLessonNav();
-        lmToast('✅ ' + (item.data.title || id));
-      }
-    });
-  });
-  const manageBtn = dd.querySelector('#lnav-manage');
-  if (manageBtn) manageBtn.addEventListener('click', () => { closeLessonNav(); openLessonModal(); });
+  renderLessonNavItems(dd);
 }
 
 function toggleLessonNav() {
@@ -2458,6 +2868,30 @@ function toggleLessonNav() {
 
 function closeLessonNav() {
   $('#lesson-nav-dropdown').classList.remove('open');
+}
+
+function renameLessonInStore(oldId, newTitle) {
+  if (!newTitle.trim() || newTitle === oldId) { renderLessonNav(); return; }
+  const store = getLessonStore();
+  if (!store[oldId]) { renderLessonNav(); return; }
+  store[newTitle] = { ...store[oldId], data: { ...store[oldId].data, title: newTitle } };
+  delete store[oldId];
+  saveLessonStore(store);
+  if (getCurrentLessonId() === oldId) {
+    setCurrentLessonId(newTitle);
+    STATE.lesson.title = newTitle;
+    $('#lesson-title-bar').textContent = newTitle;
+    const sl = $('#status-lesson');
+    if (sl) sl.textContent = newTitle;
+    // Re-render title slides (renderer reads STATE.lesson.title)
+    (STATE.lesson.slides || []).forEach((data, i) => {
+      if (data.type === 'title') {
+        const el = slideTrack.children[i];
+        if (el) { el.innerHTML = ''; RENDERERS.title(el, data, i); }
+      }
+    });
+  }
+  renderLessonNav();
 }
 
 // Close dropdown when clicking outside
@@ -2496,7 +2930,7 @@ function importLessonLibrary() {
     if (!data || !data.slides) return;
     const id = 'lib_' + (data.title || '').replace(/[^a-zA-Z0-9가-힣]/g, '_').substring(0, 40);
     validIds.add(id);
-    if (!store[id]) {
+    if (!store[id] || store[id].source === 'library') {
       store[id] = { data, savedAt: Date.now(), source: 'library' };
       imported++;
     }
@@ -2532,6 +2966,11 @@ if (!loadSavedOnStartup()) {
 }
 init();
 setupLessonManager();
+// Clear page
+$('#btn-clear-page').addEventListener('click', openClearPageModal);
+$('#cp-cancel').addEventListener('click', closeClearPageModal);
+$('#cp-confirm').addEventListener('click', () => { clearPage(); closeClearPageModal(); });
+$('#cp-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeClearPageModal(); });
 </script>
 </body>
 </html>
