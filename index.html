@@ -19,7 +19,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   --slide-bg: #ffffff; --slide-text: #0f172a; --slide-text-secondary: #475569;
   --toolbar-bg: rgba(15, 23, 42, 0.95); --toolbar-text: #e2e8f0;
   --toolbar-active: #7c3aed; --toolbar-hover: rgba(255,255,255,0.1);
-  --toolbar-height: 56px; --status-height: 28px; --panel-width: 340px;
+  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 560px);
   --touch-target: 56px;
 }
 
@@ -1054,6 +1054,7 @@ window.LESSON_LIBRARY.push({
 <script src="lessons/ch03_gist.js"></script>
 <script src="lessons/ch04_claim.js"></script>
 <script src="lessons/yder_ch03.js"></script>
+<script src="lessons/yder_ch04.js"></script>
 <script src="lessons/march25_types.js"></script>
 
 <script>
@@ -2929,7 +2930,7 @@ function importLessonLibrary() {
     if (!data || !data.slides) return;
     const id = 'lib_' + (data.title || '').replace(/[^a-zA-Z0-9가-힣]/g, '_').substring(0, 40);
     validIds.add(id);
-    if (!store[id]) {
+    if (!store[id] || store[id].source === 'library') {
       store[id] = { data, savedAt: Date.now(), source: 'library' };
       imported++;
     }
