@@ -57,8 +57,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .theme-dark .vocab-badge b { color: #e0e0e0; }
 .theme-dark .passage-notes { background: #0a0a12; border-left: 1px solid #2a2a40; }
 .theme-dark .passage-notes-header { border-bottom-color: #2a2a40; color: #a78bfa; }
-.theme-dark .passage-notes-body textarea { color: #d0d0e0; }
-.theme-dark .passage-notes-body textarea::placeholder { color: #555570; }
+.theme-dark .passage-notes-body .notes-area { color: #d0d0e0; }
+.theme-dark .passage-notes-body .notes-area:empty::before { color: #555570; }
 .theme-dark .passage-resize-handle { background: #2a2a40; }
 .theme-dark .passage-resize-handle:hover, .theme-dark .passage-resize-handle.dragging { background: #a78bfa; }
 .theme-dark .passage-left::-webkit-scrollbar-thumb { background: #333355; }
@@ -232,14 +232,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .passage-notes-body {
   flex: 1; padding: 0; overflow: hidden; display: flex;
 }
-.passage-notes-body textarea {
-  flex: 1; border: none; outline: none; resize: none; padding: 12px 14px;
+.passage-notes-body .notes-area {
+  flex: 1; border: none; outline: none; padding: 12px 14px; overflow-y: auto;
   font-family: inherit; font-size: 0.82em; line-height: 1.7; color: var(--slide-text);
   background: transparent; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+  white-space: pre-wrap; word-break: break-word;
 }
-.passage-notes-body textarea::-webkit-scrollbar { width: 5px; }
-.passage-notes-body textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-.passage-notes-body textarea::placeholder { color: #94a3b8; }
+.passage-notes-body .notes-area::-webkit-scrollbar { width: 5px; }
+.passage-notes-body .notes-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.passage-notes-body .notes-area:empty::before {
+  content: attr(data-placeholder); color: #94a3b8; pointer-events: none;
+}
 .passage-text { font-size: 1.15em; line-height: 2; word-spacing: 1px; }
 .text-hl {
   background: linear-gradient(transparent 65%, rgba(254,240,138,0.6) 65%);
@@ -1497,7 +1500,7 @@ const RENDERERS = {
       `<div class="passage-notes" data-slide="${idx}">` +
         `<div class="passage-notes-header"><span>Notes</span></div>` +
         `<div class="passage-notes-body">` +
-          `<textarea placeholder="수업 중 메모를 입력하세요..." data-notes-slide="${idx}"></textarea>` +
+          `<div contenteditable="true" class="notes-area" data-placeholder="수업 중 메모를 입력하세요..." data-notes-slide="${idx}"></div>` +
         `</div>` +
       `</div>` +
     `</div>`;
@@ -1771,8 +1774,8 @@ function saveNotes() {
   const lsKey = 'wb_notes_' + lessonKey;
   let map = {};
   try { map = JSON.parse(localStorage.getItem(lsKey) || '{}'); } catch(e) {}
-  slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    map[ta.dataset.notesSlide] = ta.value;
+  slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
+    map[el.dataset.notesSlide] = el.innerText;
   });
   try { localStorage.setItem(lsKey, JSON.stringify(map)); } catch(e) {}
 }
@@ -1781,8 +1784,8 @@ function restoreNotes() {
   if (!lessonKey) return;
   let map = {};
   try { map = JSON.parse(localStorage.getItem('wb_notes_' + lessonKey) || '{}'); } catch(e) {}
-  slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    ta.value = map[ta.dataset.notesSlide] ?? '';
+  slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
+    el.innerText = map[el.dataset.notesSlide] ?? '';
   });
 }
 function clearSlideNoteInStorage(lessonKey, slideIdx) {
@@ -2216,9 +2219,9 @@ function setupEvents() {
     }
   });
 
-  // Notes textarea: 키보드 이벤트 전파 차단 (슬라이드 전환 방지)
+  // Notes area: 키보드 이벤트 전파 차단 (슬라이드 전환 방지)
   slideTrack.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'TEXTAREA') e.stopPropagation();
+    if (e.target.classList.contains('notes-area')) e.stopPropagation();
   }, true);
 
   // Passage notes resize handles
@@ -2487,8 +2490,8 @@ function clearPage() {
   if (slideEl) {
     slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
     slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
-    const ta = slideEl.querySelector(`textarea[data-notes-slide="${idx}"]`);
-    if (ta) { ta.value = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
+    const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${idx}"]`);
+    if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
   }
 }
 function clearAllPages() {
@@ -2500,8 +2503,8 @@ function clearAllPages() {
     if (slideEl) {
       slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
       slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
-      const ta = slideEl.querySelector(`textarea[data-notes-slide="${i}"]`);
-      if (ta) { ta.value = ''; clearSlideNoteInStorage(getCurrentLessonId(), i); }
+      const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${i}"]`);
+      if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), i); }
     }
   }
   goToSlide(0);
