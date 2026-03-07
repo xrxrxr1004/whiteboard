@@ -1240,8 +1240,8 @@ function applyPalettePos(pos) {
 
 function clampPalettePos(x, y) {
   const rect = document.querySelector('#slide-container').getBoundingClientRect();
-  // RP_OUTER_RADIUS(130) + rp-item 반지름(26) + 여유 = 160px 마진으로 메뉴가 화면 밖으로 나가지 않음
-  const m = 160;
+  // 허브 중심이 화면 내에만 있으면 됨 (30px)
+  const m = 30;
   return { x: Math.max(m, Math.min(rect.width - m, x)), y: Math.max(m, Math.min(rect.height - m, y)) };
 }
 
