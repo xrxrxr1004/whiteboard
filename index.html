@@ -810,6 +810,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 
 .theme-dark .rp-item.rp-active .rp-esize-dot { background: #a78bfa; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -851,6 +852,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기" style="color:#ef4444">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
       </button>
+      <button class="tool-btn" id="btn-clear-notes" title="현재 슬라이드 메모 지우기" style="color:#f97316;font-size:12px;font-weight:700">N×</button>
       <button class="tool-btn" id="btn-lesson-mgr" title="수업 관리 (L)" style="font-size:15px">📚</button>
     </div>
     <div id="lesson-nav-wrap">
@@ -1758,21 +1760,53 @@ function startResize(e) {
   document.addEventListener('pointerup', onUp);
 }
 
-// 슬라이드 간 노트 내용 보존
-const notesStore = {};
+// 슬라이드 간 노트 내용 보존 (localStorage 영속화)
+// 저장 키: 'wb_notes_{lessonKey}' → JSON { [data-notes-slide값]: 텍스트 }
 function saveNotes() {
+  const lessonKey = getCurrentLessonId();
+  if (!lessonKey) return;
+  const lsKey = 'wb_notes_' + lessonKey;
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(lsKey) || '{}'); } catch(e) {}
   slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    const key = ta.dataset.notesSlide;
-    if (ta.value) notesStore[key] = ta.value;
+    map[ta.dataset.notesSlide] = ta.value;
   });
+  try { localStorage.setItem(lsKey, JSON.stringify(map)); } catch(e) {}
 }
 function restoreNotes() {
+  const lessonKey = getCurrentLessonId();
+  if (!lessonKey) return;
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem('wb_notes_' + lessonKey) || '{}'); } catch(e) {}
   slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    const key = ta.dataset.notesSlide;
-    if (notesStore[key]) ta.value = notesStore[key];
+    ta.value = map[ta.dataset.notesSlide] ?? '';
   });
 }
+function clearSlideNoteInStorage(lessonKey, slideIdx) {
+  if (!lessonKey) return;
+  const lsKey = 'wb_notes_' + lessonKey;
+  try {
+    const map = JSON.parse(localStorage.getItem(lsKey) || '{}');
+    delete map[slideIdx];
+    localStorage.setItem(lsKey, JSON.stringify(map));
+  } catch(e) {}
+}
+// 현재 슬라이드 notes(텍스트 필기) 지우기
+function clearCurrentSlideNotes() {
+  const idx = STATE.currentSlide;
+  const ta = slideTrack.querySelector(`textarea[data-notes-slide="${idx}"]`);
+  if (ta) ta.value = '';
+  clearSlideNoteInStorage(getCurrentLessonId(), idx);
+}
 
+
+// ===== SCROLL → CANVAS 동기화 =====
+function setupScrollSync() {
+  // scroll 이벤트는 버블링 안 됨 → capture 모드로 slideTrack 자식들의 scroll을 감지
+  slideTrack.addEventListener('scroll', () => {
+    redrawCanvas(STATE.currentSlide);
+  }, true); // capture: true
+}
 
 // ===== DRAWING ENGINE =====
 function setupCanvas() {
@@ -1791,9 +1825,17 @@ function resizeCanvas() {
   redrawCanvas(STATE.currentSlide);
 }
 
+function getCurrentSlideEl() {
+  return slideTrack.children[STATE.currentSlide] ?? null;
+}
 function getPointerPos(e) {
   const rect = canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top, pressure: e.pressure || 0.5 };
+  const scrollTop = getCurrentSlideEl()?.scrollTop ?? 0;
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top + scrollTop, // 문서 좌표로 저장
+    pressure: e.pressure || 0.5
+  };
 }
 
 function onPointerDown(e) {
@@ -1932,6 +1974,16 @@ function onPointerUp(e) {
 }
 
 function drawSegment(from, to, stroke) {
+  // 문서 좌표 → 캔버스(뷰포트) 좌표 변환
+  const scrollTop = getCurrentSlideEl()?.scrollTop ?? 0;
+  const dpr = window.devicePixelRatio || 1;
+  const visH = canvas.height / dpr;
+  const f = { x: from.x, y: from.y - scrollTop };
+  const t = { x: to.x,   y: to.y   - scrollTop };
+  // 두 점 모두 화면 밖이면 스킵 (성능)
+  const pad = stroke.width + 2;
+  if ((f.y < -pad && t.y < -pad) || (f.y > visH + pad && t.y > visH + pad)) return;
+
   ctx.save();
   if (stroke.tool === 'pixelEraser') {
     ctx.globalCompositeOperation = 'destination-out';
@@ -1950,8 +2002,8 @@ function drawSegment(from, to, stroke) {
   ctx.strokeStyle = stroke.color;
   ctx.lineWidth = stroke.width;
   ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
+  ctx.moveTo(f.x, f.y);
+  ctx.lineTo(t.x, t.y);
   ctx.stroke();
   ctx.restore();
 }
@@ -1967,6 +2019,10 @@ function redrawCanvas(slideIndex) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const strokes = STATE.slideDrawings[slideIndex] || [];
   strokes.forEach(s => drawFullStroke(s));
+  // 그리는 도중 스크롤 시에도 현재 stroke 유지
+  if (STATE.isDrawing && STATE.currentStroke?.slideIndex === slideIndex) {
+    drawFullStroke(STATE.currentStroke);
+  }
 }
 
 function handleEraser(x, y) {
@@ -2314,6 +2370,64 @@ function escRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ===== SUPABASE =====
+const SB_URL = 'https://kaucebkhvnzgtgzgnrvy.supabase.co';
+const SB_KEY = 'sb_publishable_jen7RSuHUMU6Or5tN126xQ_OFJ7AZ2e';
+let sb = null;
+try {
+  sb = window.supabase.createClient(SB_URL, SB_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+} catch(e) { console.warn('Supabase init failed', e); }
+
+// DB → 로컬 동기화 (last-write-wins by saved_at)
+async function syncFromSupabase() {
+  if (!sb) return;
+  const { data, error } = await sb.from('lessons')
+    .select('lesson_key,title,data,saved_at')
+    .is('deleted_at', null);
+  if (error || !data) return;
+  const store = getLessonStore();
+  let changed = false;
+  data.forEach(row => {
+    if (row.lesson_key.startsWith('lib_')) return;
+    const local = store[row.lesson_key];
+    if (!local || row.saved_at > (local.savedAt ?? 0)) {
+      store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
+      changed = true;
+    }
+  });
+  if (changed) { saveLessonStoreLocal(store); renderLessonList?.(); }
+}
+
+// 로컬 → DB 동기화 (upsert, lib_ 제외)
+async function pushLessonsToSB(store) {
+  if (!sb) return;
+  const rows = Object.entries(store)
+    .filter(([key, entry]) => !key.startsWith('lib_') && entry.data)
+    .map(([lesson_key, entry]) => ({
+      lesson_key,
+      title: entry.data?.title ?? lesson_key,
+      data: entry.data,
+      saved_at: entry.savedAt ?? Date.now(),
+      deleted_at: null,
+      updated_at: new Date().toISOString()
+    }));
+  if (!rows.length) return;
+  try { await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' }); }
+  catch(e) { console.warn('SB push failed', e); }
+}
+
+// 소프트 삭제
+async function deleteFromSB(key) {
+  if (!sb || key.startsWith('lib_')) return;
+  try {
+    await sb.from('lessons')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('lesson_key', key);
+  } catch(e) { console.warn('SB delete failed', e); }
+}
+
 // ===== LESSON MANAGER =====
 const STORAGE_KEY = 'wb_lessons';
 const CURRENT_KEY = 'wb_current';
@@ -2321,8 +2435,12 @@ const CURRENT_KEY = 'wb_current';
 function getLessonStore() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
 }
-function saveLessonStore(store) {
+function saveLessonStoreLocal(store) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e) { /* localStorage unavailable */ }
+}
+function saveLessonStore(store) {
+  saveLessonStoreLocal(store);
+  pushLessonsToSB(store); // 논블로킹
 }
 function setCurrentLessonId(id) {
   try { localStorage.setItem(CURRENT_KEY, id); } catch(e) { /* localStorage unavailable */ }
@@ -2362,7 +2480,7 @@ function loadLessonData(data) {
   STATE.slideDrawings = {};
   STATE.undoStack = {};
   STATE.twoFActive = false;
-  Object.keys(notesStore).forEach(k => delete notesStore[k]);
+  // notes는 localStorage 기반 — 레슨 전환 시 별도 초기화 불필요
   // Close side panel if open
   if (STATE.panelOpen) { sidePanel.classList.remove('open'); STATE.panelOpen = false; }
   applyBackground();
@@ -2412,7 +2530,7 @@ function clearPage() {
     slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
     slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
     const ta = slideEl.querySelector(`textarea[data-notes-slide="${idx}"]`);
-    if (ta) { ta.value = ''; delete notesStore[idx]; }
+    if (ta) { ta.value = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
   }
 }
 function openClearPageModal() { $('#cp-modal').classList.add('open'); }
@@ -2515,6 +2633,7 @@ function renderSavedList() {
       const s = getLessonStore();
       delete s[id];
       saveLessonStore(s);
+      deleteFromSB(id); // 논블로킹
       if (getCurrentLessonId() === id) setCurrentLessonId('');
       renderSavedList();
       lmToast('삭제됨');
@@ -2651,6 +2770,7 @@ function setupLessonManager() {
     const s = getLessonStore();
     ids.forEach(id => delete s[id]);
     saveLessonStore(s);
+    ids.filter(id => !id.startsWith('lib_')).forEach(id => deleteFromSB(id)); // 논블로킹
     if (ids.includes(getCurrentLessonId())) setCurrentLessonId('');
     renderSavedList();
     lmToast(`🗑 ${ids.length}개 삭제됨`);
@@ -2877,6 +2997,7 @@ function renameLessonInStore(oldId, newTitle) {
   store[newTitle] = { ...store[oldId], data: { ...store[oldId].data, title: newTitle } };
   delete store[oldId];
   saveLessonStore(store);
+  deleteFromSB(oldId); // 논블로킹 (새 key는 pushLessonsToSB가 처리)
   if (getCurrentLessonId() === oldId) {
     setCurrentLessonId(newTitle);
     STATE.lesson.title = newTitle;
@@ -2953,6 +3074,7 @@ function importLessonLibrary() {
 
 // ===== START =====
 importLessonLibrary();
+syncFromSupabase(); // 논블로킹 — DB에서 최신 레슨 로드
 // Try loading saved lesson first
 if (!loadSavedOnStartup()) {
   // Use first library lesson, or LESSON_DATA fallback, or create fallback
@@ -2966,6 +3088,9 @@ if (!loadSavedOnStartup()) {
 }
 init();
 setupLessonManager();
+setupScrollSync(); // 스크롤 → 캔버스 재드로우
+// Notes clear
+$('#btn-clear-notes').addEventListener('click', clearCurrentSlideNotes);
 // Clear page
 $('#btn-clear-page').addEventListener('click', openClearPageModal);
 $('#cp-cancel').addEventListener('click', closeClearPageModal);
