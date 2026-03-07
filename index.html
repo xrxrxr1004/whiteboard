@@ -1048,10 +1048,9 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
-</div>
 
-<!-- CLEAR PAGE CONFIRM MODAL -->
-<div id="cp-modal">
+  <!-- CLEAR PAGE CONFIRM MODAL (inside app-container for fullscreen visibility) -->
+  <div id="cp-modal">
   <div class="cp-dialog">
     <div class="cp-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" width="18" height="18"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -1065,6 +1064,7 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
 </div>
+</div><!-- end #app-container -->
 
 <!-- LESSON LIBRARY: 수업 파일들 (lessons/ 폴더의 .js 파일 추가) -->
 <script>window.LESSON_LIBRARY = [];</script>
@@ -1697,6 +1697,7 @@ function renderPanel() {
 function goToSlide(index) {
   if (index < 0 || index >= STATE.totalSlides) return;
   saveNotes();
+  if (STATE.panelOpen) togglePanel();
   STATE.currentSlide = index;
   slideTrack.style.transform = `translateX(-${index * 100}%)`;
   redrawCanvas(index);
@@ -1847,6 +1848,16 @@ function onPointerDown(e) {
   const pos = getPointerPos(e);
 
   if (STATE.drawingMode === 'eraser') {
+    // Check text-hl FIRST (before stroke/pixel which always returns)
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent && sent.classList.contains('text-hl')) {
+        sent.classList.remove('text-hl');
+        STATE.textErasing = true;
+        return;
+      }
+    }
     STATE.isErasing = true;
     if (STATE.eraserMode === 'stroke') {
       handleEraser(pos.x, pos.y);
@@ -1861,19 +1872,6 @@ function onPointerDown(e) {
       };
     }
     return;
-  }
-
-  // Text-following eraser: if eraser tool over highlighted sentence, remove CSS highlight
-  if (STATE.drawingMode === 'eraser') {
-    const hitEl = hitTestThrough(e.clientX, e.clientY);
-    if (hitEl) {
-      const sent = hitEl.closest('.sentence');
-      if (sent && sent.classList.contains('text-hl')) {
-        sent.classList.remove('text-hl');
-        STATE.textErasing = true;
-        return;
-      }
-    }
   }
 
   // Text-following highlighter: if highlighter tool over passage text, apply CSS highlight
@@ -2486,8 +2484,12 @@ function handleKey(e) {
 // Hit-test through the canvas overlay to find elements underneath
 function hitTestThrough(x, y) {
   canvas.style.pointerEvents = 'none';
+  // Also disable nav-zones so left/right 12% areas don't intercept
+  const navZones = document.querySelectorAll('.nav-zone');
+  navZones.forEach(z => (z.style.pointerEvents = 'none'));
   const el = document.elementFromPoint(x, y);
   canvas.style.pointerEvents = '';
+  navZones.forEach(z => (z.style.pointerEvents = ''));
   return el;
 }
 
