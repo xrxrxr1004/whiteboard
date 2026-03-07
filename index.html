@@ -552,14 +552,14 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .cp-btn {
   padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer;
-  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  font-size: 13px; font-weight: 700; transition: all 0.15s; white-space: nowrap;
 }
 .cp-btn-cancel { background: var(--surface-muted, #f1f5f9); color: var(--text-secondary, #475569); }
 .cp-btn-cancel:hover { background: var(--border, #e2e8f0); }
+.cp-btn-outline { background: transparent; color: var(--slide-text, #0f172a); border: 1.5px solid var(--border, #cbd5e1); padding: 7.5px 20px; }
+.cp-btn-outline:hover { background: var(--surface-muted, #f1f5f9); }
 .cp-btn-danger { background: #dc2626; color: #fff; }
 .cp-btn-danger:hover { filter: brightness(1.1); }
-.cp-btn-danger-all { background: #7c3aed; color: #fff; padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; }
-.cp-btn-danger-all:hover { filter: brightness(1.15); }
 
 /* ===== SORT BAR & MULTI-SELECT ===== */
 .lm-sort-bar {
@@ -650,7 +650,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 /* ===== RADIAL FLOATING PALETTE ===== */
 #radial-palette {
   position: absolute;
-  z-index: 15;
+  z-index: 120; /* side-panel(50)·toolbar(100) 위, blackout(200)·modal(300+) 아래 */
   width: 0; height: 0;
   touch-action: none;
   user-select: none;
@@ -1046,8 +1046,8 @@ window.LESSON_LIBRARY.push({
     <div class="cp-desc">지울 범위를 선택하세요.<br>이 작업은 되돌릴 수 없습니다.</div>
     <div class="cp-actions">
       <button class="cp-btn cp-btn-cancel" id="cp-cancel">취소</button>
-      <button class="cp-btn cp-btn-danger" id="cp-confirm">이 페이지</button>
-      <button class="cp-btn cp-btn-danger-all" id="cp-confirm-all">전체 지우기</button>
+      <button class="cp-btn cp-btn-outline" id="cp-confirm">이 슬라이드만</button>
+      <button class="cp-btn cp-btn-danger" id="cp-confirm-all">전체 지우기</button>
     </div>
   </div>
 </div>
@@ -1240,7 +1240,8 @@ function applyPalettePos(pos) {
 
 function clampPalettePos(x, y) {
   const rect = document.querySelector('#slide-container').getBoundingClientRect();
-  const m = 35;
+  // RP_OUTER_RADIUS(130) + rp-item 반지름(26) + 여유 = 160px 마진으로 메뉴가 화면 밖으로 나가지 않음
+  const m = 160;
   return { x: Math.max(m, Math.min(rect.width - m, x)), y: Math.max(m, Math.min(rect.height - m, y)) };
 }
 
@@ -2109,19 +2110,11 @@ function toggleBlackout() {
   blackoutEl.classList.toggle('active', STATE.blackout);
 }
 
-// ===== TOOLBAR AUTO-HIDE =====
+// ===== TOOLBAR AUTO-HIDE (비활성 — 항상 표시) =====
 function resetToolbarTimer() {
-  if (!STATE.toolbarVisible) {
-    toolbar.classList.remove('hidden');
-    STATE.toolbarVisible = true;
-  }
+  toolbar.classList.remove('hidden');
+  STATE.toolbarVisible = true;
   clearTimeout(STATE.toolbarTimer);
-  STATE.toolbarTimer = setTimeout(() => {
-    if (STATE.drawingMode !== 'navigate') return;
-    if ($('#lesson-nav-dropdown').classList.contains('open')) return;
-    toolbar.classList.add('hidden');
-    STATE.toolbarVisible = false;
-  }, 6000);
 }
 
 // ===== UI UPDATE =====
