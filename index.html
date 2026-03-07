@@ -19,7 +19,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   --slide-bg: #ffffff; --slide-text: #0f172a; --slide-text-secondary: #475569;
   --toolbar-bg: rgba(15, 23, 42, 0.95); --toolbar-text: #e2e8f0;
   --toolbar-active: #7c3aed; --toolbar-hover: rgba(255,255,255,0.1);
-  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 560px);
+  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 40vw);
   --touch-target: 56px;
 }
 
@@ -372,6 +372,12 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 #panel-resize-handle:hover::after { background: rgba(124, 58, 237, 0.18); }
 #panel-resize-handle.dragging::after { background: rgba(124, 58, 237, 0.3); }
+#panel-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 20; pointer-events: none; touch-action: none;
+}
+#panel-canvas.mode-draw { pointer-events: auto; cursor: crosshair; }
+#panel-canvas.mode-eraser { pointer-events: auto; cursor: cell; }
 body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user-select: none !important; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -934,6 +940,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 
   <!-- SIDE PANEL -->
   <div id="side-panel">
+    <canvas id="panel-canvas"></canvas>
     <div id="panel-resize-handle"></div>
     <div class="panel-header">
       <span>자료</span>
@@ -1085,6 +1092,8 @@ const STATE = {
   toolbarTimer: null,
   panelOpen: false,
   panelTab: 'vocab',
+  panelDrawings: [],
+  panelCurrentStroke: null,
   fullscreen: false,
   fontSize: 32,
   bgIndex: 0,
@@ -1443,6 +1452,7 @@ function init() {
   setupEvents();
   initPalette();
   setupPaletteEvents();
+  setupPanelCanvasEvents();
 
   $('#lesson-title-bar').textContent = STATE.lesson.title || '';
   $('#status-lesson').textContent = STATE.lesson.title || '';
@@ -2003,6 +2013,149 @@ function redrawCanvas(slideIndex) {
   strokes.forEach(s => drawFullStroke(s));
 }
 
+// ===== PANEL CANVAS =====
+const panelCanvas = document.getElementById('panel-canvas');
+const panelCtx = panelCanvas.getContext('2d');
+
+function setupPanelCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = sidePanel.offsetWidth;
+  const h = sidePanel.offsetHeight;
+  if (!w || !h) return;
+  panelCanvas.width = Math.round(w * dpr);
+  panelCanvas.height = Math.round(h * dpr);
+  panelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redrawPanelCanvas();
+}
+
+function drawPanelSegment(from, to, stroke) {
+  panelCtx.save();
+  if (stroke.tool === 'pixelEraser') {
+    panelCtx.globalCompositeOperation = 'destination-out';
+    panelCtx.globalAlpha = 1.0;
+    panelCtx.lineCap = 'round'; panelCtx.lineJoin = 'round';
+  } else if (stroke.tool === 'highlighter') {
+    panelCtx.globalAlpha = 0.25;
+    panelCtx.lineCap = 'square'; panelCtx.lineJoin = 'miter';
+  } else {
+    panelCtx.globalAlpha = 1.0;
+    panelCtx.lineCap = 'round'; panelCtx.lineJoin = 'round';
+  }
+  panelCtx.strokeStyle = stroke.color;
+  panelCtx.lineWidth = stroke.width;
+  panelCtx.beginPath();
+  panelCtx.moveTo(from.x, from.y);
+  panelCtx.lineTo(to.x, to.y);
+  panelCtx.stroke();
+  panelCtx.restore();
+}
+
+function drawPanelFullStroke(stroke) {
+  if (stroke.points.length < 2) return;
+  for (let i = 1; i < stroke.points.length; i++) {
+    drawPanelSegment(stroke.points[i - 1], stroke.points[i], stroke);
+  }
+}
+
+function redrawPanelCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  panelCtx.clearRect(0, 0, panelCanvas.width / dpr, panelCanvas.height / dpr);
+  (STATE.panelDrawings || []).forEach(s => drawPanelFullStroke(s));
+}
+
+function handlePanelEraser(x, y) {
+  const strokes = STATE.panelDrawings;
+  if (!strokes || !strokes.length) return;
+  const THRESHOLD = 20;
+  for (let i = strokes.length - 1; i >= 0; i--) {
+    for (const pt of strokes[i].points) {
+      if (Math.hypot(pt.x - x, pt.y - y) < THRESHOLD) {
+        strokes.splice(i, 1);
+        redrawPanelCanvas();
+        return;
+      }
+    }
+  }
+}
+
+function getPanelPointerPos(e) {
+  const rect = panelCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top, pressure: e.pressure || 0.5 };
+}
+
+function setupPanelCanvasEvents() {
+  let panelDrawing = false, panelErasing = false;
+
+  panelCanvas.addEventListener('pointerdown', e => {
+    if (STATE.drawingMode === 'navigate') return;
+    e.preventDefault(); e.stopPropagation();
+    panelCanvas.setPointerCapture(e.pointerId);
+    const pos = getPanelPointerPos(e);
+
+    if (STATE.drawingMode === 'eraser') {
+      panelErasing = true;
+      if (STATE.eraserMode === 'stroke' || STATE.eraserMode === 'element') {
+        handlePanelEraser(pos.x, pos.y);
+      } else {
+        STATE.panelCurrentStroke = { points: [pos], color: '#000000', width: STATE.pixelEraserSize, tool: 'pixelEraser' };
+      }
+      return;
+    }
+
+    panelDrawing = true;
+    STATE.panelCurrentStroke = {
+      points: [pos],
+      color: STATE.penColor,
+      width: STATE.drawingMode === 'highlighter' ? STATE.penWidth * 5 : STATE.penWidth,
+      tool: STATE.drawingMode
+    };
+  });
+
+  panelCanvas.addEventListener('pointermove', e => {
+    if (!panelDrawing && !panelErasing) return;
+    e.preventDefault();
+    const pos = getPanelPointerPos(e);
+
+    if (panelErasing) {
+      if (STATE.eraserMode === 'stroke' || STATE.eraserMode === 'element') {
+        handlePanelEraser(pos.x, pos.y);
+      } else if (STATE.panelCurrentStroke) {
+        STATE.panelCurrentStroke.points.push(pos);
+        const pts = STATE.panelCurrentStroke.points;
+        drawPanelSegment(pts[pts.length - 2], pts[pts.length - 1], STATE.panelCurrentStroke);
+      }
+      return;
+    }
+
+    if (STATE.panelCurrentStroke) {
+      STATE.panelCurrentStroke.points.push(pos);
+      const pts = STATE.panelCurrentStroke.points;
+      if (pts.length >= 2) drawPanelSegment(pts[pts.length - 2], pts[pts.length - 1], STATE.panelCurrentStroke);
+    }
+  });
+
+  const endPanelDraw = () => {
+    if (panelErasing) {
+      if (STATE.eraserMode === 'pixel' && STATE.panelCurrentStroke && STATE.panelCurrentStroke.points.length > 1) {
+        STATE.panelDrawings.push(STATE.panelCurrentStroke);
+        redrawPanelCanvas();
+      }
+      STATE.panelCurrentStroke = null;
+      panelErasing = false;
+      return;
+    }
+    if (panelDrawing && STATE.panelCurrentStroke) {
+      STATE.panelDrawings.push(STATE.panelCurrentStroke);
+      STATE.panelCurrentStroke = null;
+    }
+    panelDrawing = false;
+  };
+  panelCanvas.addEventListener('pointerup', endPanelDraw);
+  panelCanvas.addEventListener('pointercancel', endPanelDraw);
+
+  new ResizeObserver(() => setupPanelCanvas()).observe(sidePanel);
+}
+
 function handleEraser(x, y) {
   const strokes = STATE.slideDrawings[STATE.currentSlide];
   if (!strokes || !strokes.length) return;
@@ -2059,8 +2212,13 @@ function setTool(tool) {
   STATE.drawingMode = tool;
   if (tool === 'eraser') {
     canvas.className = STATE.eraserMode === 'pixel' ? 'mode-eraser-pixel' : 'mode-eraser';
+    panelCanvas.className = 'mode-eraser';
+  } else if (tool === 'navigate') {
+    canvas.className = 'mode-navigate';
+    panelCanvas.className = '';
   } else {
-    canvas.className = tool === 'navigate' ? 'mode-navigate' : '';
+    canvas.className = '';
+    panelCanvas.className = 'mode-draw';
   }
 
   $$('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
@@ -2114,6 +2272,7 @@ function toggleFullscreen() {
 function togglePanel() {
   STATE.panelOpen = !STATE.panelOpen;
   sidePanel.classList.toggle('open', STATE.panelOpen);
+  if (STATE.panelOpen) requestAnimationFrame(setupPanelCanvas);
 }
 
 // ===== BLACKOUT =====
@@ -2171,7 +2330,8 @@ function setupEvents() {
     window._panelResizeSetup = true;
     const handle = $('#panel-resize-handle');
     const panel  = $('#side-panel');
-    const MIN_W  = 240, MAX_W = 560;
+    const MIN_W  = 240;
+    const getMaxW = () => Math.round(slideContainer.offsetWidth * 0.4);
     let startX = 0, startW = 0, dragging = false;
 
     // 저장된 너비 복원 (페이지 로드 시 1회)
@@ -2190,7 +2350,7 @@ function setupEvents() {
     });
     handle.addEventListener('pointermove', e => {
       if (!dragging) return;
-      const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
+      const w = Math.max(MIN_W, Math.min(getMaxW(), startW + (startX - e.clientX)));
       document.documentElement.style.setProperty('--panel-width', Math.round(w) + 'px');
     });
     const endDrag = e => {
