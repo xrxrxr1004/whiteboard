@@ -564,15 +564,18 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 }
 .cp-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .cp-desc { font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.6; }
-.cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.cp-actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
 .cp-btn {
   padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer;
   font-size: 13px; font-weight: 700; transition: all 0.15s; white-space: nowrap;
 }
-.cp-btn-cancel { background: var(--surface-muted, #f1f5f9); color: var(--text-secondary, #475569); }
-.cp-btn-cancel:hover { background: var(--border, #e2e8f0); }
-.cp-btn-outline { background: transparent; color: var(--slide-text, #0f172a); border: 1.5px solid var(--border, #cbd5e1); padding: 7.5px 20px; }
-.cp-btn-outline:hover { background: var(--surface-muted, #f1f5f9); }
+/* 취소: 왼쪽 끝으로 분리 */
+.cp-btn-cancel { background: none; color: var(--text-secondary, #475569); margin-right: auto; }
+.cp-btn-cancel:hover { background: var(--surface-muted, #f1f5f9); }
+/* 이 슬라이드만: 주황색 — 범위 제한적 action */
+.cp-btn-warning { background: #d97706; color: #fff; }
+.cp-btn-warning:hover { filter: brightness(1.12); }
+/* 전체 지우기: 빨간색 — 가장 위험한 action */
 .cp-btn-danger { background: #dc2626; color: #fff; }
 .cp-btn-danger:hover { filter: brightness(1.1); }
 
@@ -1086,7 +1089,7 @@ window.LESSON_LIBRARY.push({
     <div class="cp-desc">지울 범위를 선택하세요.<br>이 작업은 되돌릴 수 없습니다.</div>
     <div class="cp-actions">
       <button class="cp-btn cp-btn-cancel" id="cp-cancel">취소</button>
-      <button class="cp-btn cp-btn-outline" id="cp-confirm">이 슬라이드만</button>
+      <button class="cp-btn cp-btn-warning" id="cp-confirm">이 슬라이드만</button>
       <button class="cp-btn cp-btn-danger" id="cp-confirm-all">전체 지우기</button>
     </div>
   </div>
