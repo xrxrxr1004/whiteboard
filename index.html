@@ -1471,6 +1471,8 @@ function init() {
   STATE.fontSize = s.defaultFontSize || 32;
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
+  // 저장된 필기 복원
+  STATE.slideDrawings = loadDrawingsLocal(getCurrentLessonId());
   applyBackground();
   slideContainer.style.fontSize = STATE.fontSize + 'px';
 
@@ -2001,6 +2003,7 @@ function onPointerUp(e) {
   STATE.slideDrawings[idx].push(STATE.currentStroke);
   STATE.undoStack[idx] = [];
   STATE.currentStroke = null;
+  saveDrawingsLocal();
 }
 
 function drawSegment(from, to, stroke) {
@@ -2208,6 +2211,7 @@ function clearDrawing() {
     STATE.undoStack[idx] = strokes.slice();
     STATE.slideDrawings[idx] = [];
     redrawCanvas(idx);
+    saveDrawingsLocal();
   }
 }
 
@@ -2219,6 +2223,7 @@ function undo() {
   if (!STATE.undoStack[idx]) STATE.undoStack[idx] = [];
   STATE.undoStack[idx].push(removed);
   redrawCanvas(idx);
+  saveDrawingsLocal();
 }
 
 function redo() {
@@ -2229,6 +2234,7 @@ function redo() {
   if (!STATE.slideDrawings[idx]) STATE.slideDrawings[idx] = [];
   STATE.slideDrawings[idx].push(restored);
   redrawCanvas(idx);
+  saveDrawingsLocal();
 }
 
 // ===== TOOL MANAGEMENT =====
@@ -2557,6 +2563,19 @@ function escRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ===== DRAWINGS PERSISTENCE (localStorage only) =====
+function drawingsKey() { return 'wb_draw_' + (getCurrentLessonId() || '__default'); }
+function saveDrawingsLocal() {
+  try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
+}
+function loadDrawingsLocal(lessonKey) {
+  try {
+    const key = 'wb_draw_' + (lessonKey || '__default');
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
 // ===== SUPABASE =====
 const SB_URL = 'https://kaucebkhvnzgtgzgnrvy.supabase.co';
 const SB_KEY = 'sb_publishable_jen7RSuHUMU6Or5tN126xQ_OFJ7AZ2e';
@@ -2657,14 +2676,14 @@ function parseLessonInput(text) {
   return null;
 }
 
-function loadLessonData(data) {
+function loadLessonData(data, lessonKey) {
   STATE.lesson = data;
   const s = data.settings || {};
   STATE.fontSize = s.defaultFontSize || 32;
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
   STATE.currentSlide = 0;
-  STATE.slideDrawings = {};
+  STATE.slideDrawings = loadDrawingsLocal(lessonKey || getCurrentLessonId());
   STATE.undoStack = {};
   STATE.twoFActive = false;
   // notes는 localStorage 기반 — 레슨 전환 시 별도 초기화 불필요
@@ -2712,6 +2731,7 @@ function clearPage() {
   STATE.slideDrawings[idx] = [];
   STATE.undoStack[idx] = [];
   redrawCanvas(idx);
+  saveDrawingsLocal();
   const slideEl = slideTrack.children[idx];
   if (slideEl) {
     slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
@@ -2733,6 +2753,7 @@ function clearAllPages() {
       if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), i); }
     }
   }
+  saveDrawingsLocal();
   goToSlide(0);
 }
 function openClearPageModal() { $('#cp-modal').classList.add('open'); }
@@ -2819,8 +2840,8 @@ function renderSavedList() {
       const id = el.dataset.lessonId;
       const item = getLessonStore()[id];
       if (item && item.data) {
-        loadLessonData(item.data);
         setCurrentLessonId(id);
+        loadLessonData(item.data, id);
         closeLessonModal();
         lmToast('✅ "' + (item.data.title || id) + '" 로드 완료');
       }
@@ -3066,7 +3087,7 @@ function renderLessonNavItems(dd) {
         const slideIdx = parseInt(subItem.dataset.slideIdx);
         if (id !== curId) {
           const storeItem = getLessonStore()[id];
-          if (storeItem && storeItem.data) { loadLessonData(storeItem.data); setCurrentLessonId(id); }
+          if (storeItem && storeItem.data) { setCurrentLessonId(id); loadLessonData(storeItem.data, id); }
         }
         if (slideIdx >= 0) goToSlide(slideIdx);
         closeLessonNav();
@@ -3083,8 +3104,8 @@ function renderLessonNavItems(dd) {
         if (id !== curId) {
           const storeItem = getLessonStore()[id];
           if (storeItem && storeItem.data) {
-            loadLessonData(storeItem.data);
             setCurrentLessonId(id);
+            loadLessonData(storeItem.data, id);
             lnavExpanded.add(id);
             renderLessonNavItems(dd);
           }
