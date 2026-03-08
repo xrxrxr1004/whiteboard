@@ -614,11 +614,28 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .theme-dark .lm-bulk-bar { background: #141420; border-top-color: #2a2a40; }
 .lm-toast {
   position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-  background: #065f46; color: #ecfdf5; padding: 10px 24px; border-radius: 10px;
+  background: #1e293b; color: #e2e8f0; padding: 10px 16px 10px 20px; border-radius: 10px;
   font-size: 13px; font-weight: 600; z-index: 350; opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
+  pointer-events: none; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35); white-space: nowrap;
 }
-.lm-toast.show { opacity: 1; }
+.lm-toast.show { opacity: 1; pointer-events: auto; }
+#lm-undo-btn {
+  background: rgba(167,139,250,0.25); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.4);
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+#lm-undo-btn:hover { background: rgba(167,139,250,0.4); }
+#lm-undo-countdown {
+  font-size: 11px; color: #94a3b8; font-weight: 400; flex-shrink: 0;
+}
+.lm-list-btn.rename { color: #64748b; }
+.lm-list-btn.rename:hover { background: #eff6ff; color: #3b82f6; }
+.lm-rename-input {
+  font-size: 14px; font-weight: 700; width: 100%; border: none;
+  border-bottom: 2px solid #7c3aed; background: transparent;
+  color: var(--slide-text, #0f172a); outline: none; padding: 0 2px;
+}
 
 /* ===== LESSON DROPZONE ===== */
 .lm-dropzone {
@@ -2705,9 +2722,98 @@ function loadLessonData(data, lessonKey) {
 
 function lmToast(msg) {
   const t = $('#lm-toast');
-  t.textContent = msg;
+  t.innerHTML = `<span>${msg}</span>`;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  setTimeout(() => { t.classList.remove('show'); t.innerHTML = ''; }, 2200);
+}
+
+// ── Undo toast (삭제 취소용) ──
+let pendingUndo = null;
+
+function showUndoToast(msg, onUndo) {
+  const t = $('#lm-toast');
+  t.innerHTML = `<span>${msg}</span><button id="lm-undo-btn">실행 취소</button><span id="lm-undo-countdown">5</span>`;
+  t.classList.add('show');
+  let sec = 5;
+  const tick = setInterval(() => {
+    sec--;
+    const cd = document.getElementById('lm-undo-countdown');
+    if (cd) cd.textContent = sec;
+    if (sec <= 0) clearInterval(tick);
+  }, 1000);
+  document.getElementById('lm-undo-btn').addEventListener('click', () => {
+    clearInterval(tick);
+    onUndo();
+  });
+  if (pendingUndo) pendingUndo._tick = tick;
+}
+
+function hideUndoToast() {
+  const t = $('#lm-toast');
+  t.classList.remove('show');
+  t.innerHTML = '';
+  if (pendingUndo?._tick) clearInterval(pendingUndo._tick);
+}
+
+// ── 실제 삭제 실행 (SB soft-delete) ──
+function flushPendingDelete() {
+  if (!pendingUndo) return;
+  Object.keys(pendingUndo.items)
+    .filter(id => !id.startsWith('lib_'))
+    .forEach(id => deleteFromSB(id));
+  pendingUndo = null;
+  hideUndoToast();
+}
+
+// ── 삭제 진입점 (개별 + 일괄 공통) ──
+function doDeleteLessons(ids) {
+  // 기존 pending 있으면 즉시 확정
+  if (pendingUndo) {
+    clearTimeout(pendingUndo.timer);
+    flushPendingDelete();
+  }
+  const s = getLessonStore();
+  const backup = {};
+  const currentWas = ids.includes(getCurrentLessonId()) ? getCurrentLessonId() : null;
+  ids.forEach(id => { if (s[id]) { backup[id] = s[id]; } delete s[id]; });
+  saveLessonStoreLocal(s); // SB push는 undo 시간 후에
+  if (currentWas) setCurrentLessonId('');
+  renderSavedList();
+
+  const label = ids.length === 1
+    ? `"${(backup[ids[0]]?.data?.title || ids[0])}" 삭제됨`
+    : `${ids.length}개 레슨 삭제됨`;
+
+  const timer = setTimeout(() => { flushPendingDelete(); }, 5000);
+  pendingUndo = { items: backup, timer, currentWas, _tick: null };
+
+  showUndoToast(`🗑 ${label}`, () => {
+    clearTimeout(pendingUndo.timer);
+    const s2 = getLessonStore();
+    Object.entries(pendingUndo.items).forEach(([id, entry]) => { s2[id] = entry; });
+    saveLessonStoreLocal(s2);
+    if (pendingUndo.currentWas) setCurrentLessonId(pendingUndo.currentWas);
+    pendingUndo = null;
+    hideUndoToast();
+    renderSavedList();
+    lmToast('↩ 복구됨');
+  });
+}
+
+// ── 제목 수정 + DB 동기화 ──
+function renameLesson(id, newTitle) {
+  if (!newTitle.trim()) return;
+  const s = getLessonStore();
+  if (!s[id]?.data) return;
+  s[id].data.title = newTitle.trim();
+  s[id].savedAt = Date.now();
+  saveLessonStore(s); // localStorage + SB upsert
+  if (getCurrentLessonId() === id) {
+    STATE.lesson.title = newTitle.trim();
+    $('#lesson-title-bar').textContent = newTitle.trim();
+    $('#status-lesson').textContent = newTitle.trim();
+  }
+  renderSavedList();
 }
 
 function openLessonModal() {
@@ -2811,6 +2917,7 @@ function renderSavedList() {
         <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${countStr} · ${dateStr}</div>
       </div>
       <div class="lm-list-actions">
+        <button class="lm-list-btn rename" data-rename-id="${esc(k)}" title="제목 수정">✏️</button>
         <button class="lm-list-btn delete" data-delete-id="${esc(k)}" title="삭제">🗑</button>
       </div>
     </li>`;
@@ -2848,18 +2955,39 @@ function renderSavedList() {
     });
   });
 
-  // 개별 삭제
+  // 개별 삭제 → undo toast
   list.querySelectorAll('[data-delete-id]').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = el.dataset.deleteId;
-      const s = getLessonStore();
-      delete s[id];
-      saveLessonStore(s);
-      deleteFromSB(id); // 논블로킹
-      if (getCurrentLessonId() === id) setCurrentLessonId('');
-      renderSavedList();
-      lmToast('삭제됨');
+      doDeleteLessons([el.dataset.deleteId]);
+    });
+  });
+
+  // 제목 인라인 수정
+  list.querySelectorAll('[data-rename-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.renameId;
+      const li = btn.closest('li');
+      const titleDiv = li.querySelector('.lm-list-title');
+      const currentTitle = getLessonStore()[id]?.data?.title || id;
+      // 이미 편집 중이면 무시
+      if (li.querySelector('.lm-rename-input')) return;
+      const input = document.createElement('input');
+      input.className = 'lm-rename-input';
+      input.value = currentTitle;
+      titleDiv.replaceWith(input);
+      input.focus(); input.select();
+      const commit = () => {
+        const newTitle = input.value.trim() || currentTitle;
+        renameLesson(id, newTitle);
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.removeEventListener('blur', commit); renderSavedList(); }
+        ev.stopPropagation();
+      });
     });
   });
 
@@ -2985,18 +3113,12 @@ function setupLessonManager() {
     $('#lm-bulk-bar').classList.add('hidden');
   });
 
-  // ── 일괄 삭제 ──
+  // ── 일괄 삭제 → undo toast ──
   $('#lm-bulk-delete').addEventListener('click', () => {
     const checked = $('#lm-saved-list').querySelectorAll('.lm-list-check:checked');
     if (!checked.length) return;
     const ids = Array.from(checked).map(cb => cb.dataset.checkId);
-    const s = getLessonStore();
-    ids.forEach(id => delete s[id]);
-    saveLessonStore(s);
-    ids.filter(id => !id.startsWith('lib_')).forEach(id => deleteFromSB(id)); // 논블로킹
-    if (ids.includes(getCurrentLessonId())) setCurrentLessonId('');
-    renderSavedList();
-    lmToast(`🗑 ${ids.length}개 삭제됨`);
+    doDeleteLessons(ids);
   });
 }
 
