@@ -19,7 +19,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   --slide-bg: #ffffff; --slide-text: #0f172a; --slide-text-secondary: #475569;
   --toolbar-bg: rgba(15, 23, 42, 0.95); --toolbar-text: #e2e8f0;
   --toolbar-active: #7c3aed; --toolbar-hover: rgba(255,255,255,0.1);
-  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 560px);
+  --toolbar-height: 56px; --status-height: 28px; --panel-width: clamp(300px, 30vw, 40vw);
   --touch-target: 56px;
 }
 
@@ -57,8 +57,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .theme-dark .vocab-badge b { color: #e0e0e0; }
 .theme-dark .passage-notes { background: #0a0a12; border-left: 1px solid #2a2a40; }
 .theme-dark .passage-notes-header { border-bottom-color: #2a2a40; color: #a78bfa; }
-.theme-dark .passage-notes-body textarea { color: #d0d0e0; }
-.theme-dark .passage-notes-body textarea::placeholder { color: #555570; }
+.theme-dark .passage-notes-body .notes-area { color: #d0d0e0; }
+.theme-dark .passage-notes-body .notes-area:empty::before { color: #555570; }
 .theme-dark .passage-resize-handle { background: #2a2a40; }
 .theme-dark .passage-resize-handle:hover, .theme-dark .passage-resize-handle.dragging { background: #a78bfa; }
 .theme-dark .passage-left::-webkit-scrollbar-thumb { background: #333355; }
@@ -97,6 +97,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .tool-group { display: flex; align-items: center; gap: 2px; }
 .tool-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.15); margin: 0 6px; }
 .tool-sep-wide { width: 1px; height: 32px; background: rgba(255,255,255,0.25); margin: 0 10px; }
+.tb-spacer { flex: 1; }
+#btn-clear-page { color: #ef4444; }
 .tool-btn {
   min-width: var(--touch-target); height: var(--touch-target);
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -111,11 +113,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   width: 20px; height: 3px; background: var(--toolbar-active); border-radius: 2px;
 }
 .tool-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+#toolbar-drawing-group .tool-btn svg { width: 18px; height: 18px; }
 #slide-counter {
   font-size: 14px; font-weight: 600; min-width: 60px; text-align: center;
   color: #e2e8f0; letter-spacing: 1px;
+  cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: background 0.12s;
 }
-#lesson-nav-wrap { position: relative; margin-left: auto; }
+#slide-counter:hover { background: var(--toolbar-hover); }
+#slide-jump-input:focus { outline: 1px solid rgba(167,139,250,0.7); border-radius: 4px; }
+.tool-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+#btn-font-up, #btn-font-down { min-width: 38px; padding: 0 6px; font-size: 12px; }
+#lesson-nav-wrap { position: relative; }
 #lesson-title-bar {
   font-size: 12px; color: #94a3b8; max-width: 240px; background: none; border: 1px solid transparent;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
@@ -124,7 +132,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 #lesson-title-bar:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
 #lesson-title-bar::after { content: ' ▾'; font-size: 10px; opacity: 0.5; }
 .lnav-dropdown {
-  display: none; flex-direction: column; position: absolute; right: 0; top: 100%; margin-top: 6px;
+  display: none; flex-direction: column; position: absolute; left: 0; top: 100%; margin-top: 6px;
   background: #1e293b; border: 1px solid #334155; border-radius: 10px;
   width: 280px; max-height: 420px; overflow: hidden; z-index: 3000;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5);
@@ -186,6 +194,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 #slide-track {
   display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  position: relative; z-index: 6; /* above nav-zones (z:5) so interactive elements are clickable */
 }
 .slide {
   min-width: 100%; height: 100%; padding: 40px 60px 80px; overflow-y: auto;
@@ -209,7 +218,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 
 /* Passage */
-.slide-header { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.slide-header { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
 /* Passage split layout */
 .passage-split { display: flex; flex: 1; gap: 0; min-height: 0; overflow: hidden; }
 .passage-left { flex: 1; overflow-y: auto; padding-right: 12px; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
@@ -232,14 +241,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .passage-notes-body {
   flex: 1; padding: 0; overflow: hidden; display: flex;
 }
-.passage-notes-body textarea {
-  flex: 1; border: none; outline: none; resize: none; padding: 12px 14px;
+.passage-notes-body .notes-area {
+  flex: 1; border: none; outline: none; padding: 12px 14px; overflow-y: auto;
   font-family: inherit; font-size: 0.82em; line-height: 1.7; color: var(--slide-text);
   background: transparent; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+  white-space: pre-wrap; word-break: break-word;
 }
-.passage-notes-body textarea::-webkit-scrollbar { width: 5px; }
-.passage-notes-body textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-.passage-notes-body textarea::placeholder { color: #94a3b8; }
+.passage-notes-body .notes-area::-webkit-scrollbar { width: 5px; }
+.passage-notes-body .notes-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.passage-notes-body .notes-area:empty::before {
+  content: attr(data-placeholder); color: #94a3b8; pointer-events: none;
+}
 .passage-text { font-size: 1.15em; line-height: 2; word-spacing: 1px; }
 .text-hl {
   background: linear-gradient(transparent 65%, rgba(254,240,138,0.6) 65%);
@@ -322,7 +334,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 /* Blank */
 .slide-blank { justify-content: center; align-items: center; }
 .slide-blank::after {
-  content: '자유 필기 화면'; font-size: 0.8em; color: var(--text-muted); opacity: 0.4;
+  content: ''; font-size: 0.8em; color: var(--text-muted); opacity: 0.4;
   position: absolute; bottom: 60px; pointer-events: none;
 }
 
@@ -345,6 +357,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   position: absolute; top: 0; width: 12%; height: 100%; z-index: 5;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; /* slide-track (z:6) is above nav-zones; clicks handled on slide-container */
 }
 .nav-zone:hover { opacity: 1; }
 .nav-zone svg { width: 48px; height: 48px; fill: rgba(0,0,0,0.15); }
@@ -353,7 +366,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 
 /* ===== SIDE PANEL ===== */
 #side-panel {
-  position: absolute; top: 0; right: 0; width: var(--panel-width); height: 100%;
+  position: absolute; top: var(--toolbar-height); right: 0; width: var(--panel-width); height: calc(100% - var(--toolbar-height));
   background: var(--surface); border-left: 1px solid var(--border);
   z-index: 50; transform: translateX(100%); transition: transform 0.3s ease;
   display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.1);
@@ -369,6 +382,12 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 #panel-resize-handle:hover::after { background: rgba(124, 58, 237, 0.18); }
 #panel-resize-handle.dragging::after { background: rgba(124, 58, 237, 0.3); }
+#panel-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 20; pointer-events: none; touch-action: none;
+}
+#panel-canvas.mode-draw { pointer-events: auto; cursor: crosshair; }
+#panel-canvas.mode-eraser { pointer-events: auto; cursor: cell; }
 body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user-select: none !important; }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -379,6 +398,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
   width: 36px; height: 36px; border: none; background: none; cursor: pointer;
   border-radius: 8px; display: flex; align-items: center; justify-content: center;
   color: var(--text-secondary); font-size: 20px;
+  position: relative; z-index: 30;
 }
 .panel-close:hover { background: var(--surface-muted); }
 .panel-body { flex: 1; overflow-y: auto; padding: 16px 20px 80px; }
@@ -549,13 +569,18 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 }
 .cp-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .cp-desc { font-size: 13px; color: var(--text-secondary, #475569); line-height: 1.6; }
-.cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.cp-actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
 .cp-btn {
   padding: 9px 20px; border: none; border-radius: 8px; cursor: pointer;
-  font-size: 13px; font-weight: 700; transition: all 0.15s;
+  font-size: 13px; font-weight: 700; transition: all 0.15s; white-space: nowrap;
 }
-.cp-btn-cancel { background: var(--surface-muted, #f1f5f9); color: var(--text-secondary, #475569); }
-.cp-btn-cancel:hover { background: var(--border, #e2e8f0); }
+/* 취소: 왼쪽 끝으로 분리 */
+.cp-btn-cancel { background: none; color: var(--text-secondary, #475569); margin-right: auto; }
+.cp-btn-cancel:hover { background: var(--surface-muted, #f1f5f9); }
+/* 이 슬라이드만: 주황색 — 범위 제한적 action */
+.cp-btn-warning { background: #d97706; color: #fff; }
+.cp-btn-warning:hover { filter: brightness(1.12); }
+/* 전체 지우기: 빨간색 — 가장 위험한 action */
 .cp-btn-danger { background: #dc2626; color: #fff; }
 .cp-btn-danger:hover { filter: brightness(1.1); }
 
@@ -594,11 +619,28 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .theme-dark .lm-bulk-bar { background: #141420; border-top-color: #2a2a40; }
 .lm-toast {
   position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-  background: #065f46; color: #ecfdf5; padding: 10px 24px; border-radius: 10px;
+  background: #1e293b; color: #e2e8f0; padding: 10px 16px 10px 20px; border-radius: 10px;
   font-size: 13px; font-weight: 600; z-index: 350; opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
+  pointer-events: none; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35); white-space: nowrap;
 }
-.lm-toast.show { opacity: 1; }
+.lm-toast.show { opacity: 1; pointer-events: auto; }
+#lm-undo-btn {
+  background: rgba(167,139,250,0.25); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.4);
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+#lm-undo-btn:hover { background: rgba(167,139,250,0.4); }
+#lm-undo-countdown {
+  font-size: 11px; color: #94a3b8; font-weight: 400; flex-shrink: 0;
+}
+.lm-list-btn.rename { color: #64748b; }
+.lm-list-btn.rename:hover { background: #eff6ff; color: #3b82f6; }
+.lm-rename-input {
+  font-size: 14px; font-weight: 700; width: 100%; border: none;
+  border-bottom: 2px solid #7c3aed; background: transparent;
+  color: var(--slide-text, #0f172a); outline: none; padding: 0 2px;
+}
 
 /* ===== LESSON DROPZONE ===== */
 .lm-dropzone {
@@ -648,7 +690,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 /* ===== RADIAL FLOATING PALETTE ===== */
 #radial-palette {
   position: absolute;
-  z-index: 15;
+  z-index: 120; /* side-panel(50)·toolbar(100) 위, blackout(200)·modal(300+) 아래 */
   width: 0; height: 0;
   touch-action: none;
   user-select: none;
@@ -745,6 +787,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .rp-ring-inner .rp-item:nth-child(2) { transition-delay: 40ms; }
 .rp-ring-inner .rp-item:nth-child(3) { transition-delay: 80ms; }
 .rp-ring-inner .rp-item:nth-child(4) { transition-delay: 120ms; }
+.rp-ring-inner .rp-item:nth-child(5) { transition-delay: 160ms; }
 /* Stagger outer */
 .rp-ring-outer .rp-item:nth-child(1) { transition-delay: 60ms; }
 .rp-ring-outer .rp-item:nth-child(2) { transition-delay: 90ms; }
@@ -809,32 +852,131 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 #drawing-canvas.mode-eraser-pixel { cursor: crosshair; }
 
 .theme-dark .rp-item.rp-active .rp-esize-dot { background: #a78bfa; }
+
+/* ====== VARIANT QUESTION SYSTEM ====== */
+.vq-trigger-btn {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px; text-transform: none;
+  padding: 3px 10px; border-radius: 10px;
+  border: 1.5px solid var(--purple); color: var(--purple);
+  background: transparent; cursor: pointer;
+  position: relative; z-index: 30;
+  transition: background 0.13s, color 0.13s;
+}
+.vq-trigger-btn:hover { background: var(--purple); color: #fff; }
+.theme-dark .vq-trigger-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-trigger-btn:hover { background: #a78bfa; color: #1e1e2e; }
+
+/* Type-selection modal */
+.vq-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1100; }
+.vq-backdrop.hidden { display: none; }
+.vq-modal { background: #fff; border-radius: 16px; padding: 20px 24px; width: 480px; max-width: 95vw; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+.theme-dark .vq-modal { background: #1e1e2e; }
+.vq-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.vq-modal-header-title { font-size: 0.88rem; font-weight: 700; color: #334155; }
+.theme-dark .vq-modal-header-title { color: #e2e8f0; }
+.vq-modal-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 18px; color: #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.vq-modal-close:hover { background: #f1f5f9; }
+.theme-dark .vq-modal-close:hover { background: #2d2d42; }
+.vq-cat-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; min-height: 28px; }
+.vq-cat-label { font-size: 0.72rem; font-weight: 600; color: #64748b; width: 68px; flex-shrink: 0; padding-top: 5px; text-transform: none; letter-spacing: 0; }
+.theme-dark .vq-cat-label { color: #94a3b8; }
+.vq-cat-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.vq-type-btn { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; transition: background 0.12s, color 0.12s; }
+.vq-type-btn:hover:not(:disabled) { background: #8b5cf6; color: #fff; }
+.vq-type-btn:disabled { border-color: #cbd5e1; color: #cbd5e1; cursor: not-allowed; opacity: 0.5; }
+.theme-dark .vq-type-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-type-btn:hover:not(:disabled) { background: #a78bfa; color: #1e1e2e; }
+.theme-dark .vq-type-btn:disabled { border-color: #3b4255; color: #3b4255; }
+
+/* Type button selected state + modal footer */
+.vq-type-btn.selected { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-type-btn.selected { background: #a78bfa; color: #1e1e2e; }
+.vq-modal-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+.theme-dark .vq-modal-footer { border-top-color: #2d2d42; }
+.vq-select-count { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+.theme-dark .vq-select-count { color: #94a3b8; }
+.vq-confirm-btn { padding: 7px 20px; border-radius: 8px; background: #8b5cf6; color: #fff; border: none; cursor: pointer; font-weight: 700; font-size: 0.82rem; transition: background 0.12s; }
+.vq-confirm-btn:hover { background: #7c3aed; }
+.vq-confirm-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+.theme-dark .vq-confirm-btn { background: #a78bfa; color: #1e1e2e; }
+.theme-dark .vq-confirm-btn:hover { background: #8b5cf6; }
+/* vq_question slide */
+.vq-slide-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid #ede9fe; }
+.theme-dark .vq-slide-header { border-bottom-color: #2d2040; }
+.vq-back-btn { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; flex-shrink: 0; position: relative; z-index: 30; transition: background 0.12s, color 0.12s; }
+.vq-back-btn:hover { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-back-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-back-btn:hover { background: #a78bfa; color: #1e1e2e; }
+.vq-slide-title { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; flex: 1; }
+.vq-slide-counter { font-size: 0.75rem; color: #94a3b8; font-weight: 600; flex-shrink: 0; }
+.vq-passage-mod { background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 14px 16px; font-size: 0.88rem; line-height: 1.8; margin-bottom: 16px; color: #334155; white-space: pre-wrap; }
+.theme-dark .vq-passage-mod { background: #2a2710; border-color: #4a4416; color: #e2e8f0; }
+.vq-insert-sentence { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px; font-size: 0.87rem; margin-bottom: 14px; color: #166534; line-height: 1.65; }
+.theme-dark .vq-insert-sentence { background: #0f2018; border-color: #166534; color: #86efac; }
+.vq-blocks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.vq-block { padding: 10px 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #8b5cf6; font-size: 0.87rem; line-height: 1.75; }
+.vq-block-label { font-weight: 700; color: #8b5cf6; margin-right: 8px; }
+.theme-dark .vq-block { background: #252535; }
+.vq-question-text { font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; line-height: 1.6; }
+.theme-dark .vq-question-text { color: #e2e8f0; }
+.vq-options-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.vq-option { padding: 9px 14px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.87rem; cursor: pointer; transition: border-color 0.12s, background 0.12s; color: #334155; line-height: 1.55; }
+.vq-option:hover { border-color: #8b5cf6; background: #faf5ff; }
+.vq-option.correct { background: #dcfce7; border-color: #22c55e; color: #166534; font-weight: 600; }
+.vq-option.wrong { background: #fee2e2; border-color: #f87171; color: #991b1b; }
+.theme-dark .vq-option { border-color: #374151; color: #e2e8f0; }
+.theme-dark .vq-option:hover { border-color: #a78bfa; background: #1e1535; }
+.theme-dark .vq-option.correct { background: #0f2018; border-color: #22c55e; color: #86efac; }
+.theme-dark .vq-option.wrong { background: #200f0f; border-color: #f87171; color: #fca5a5; }
+.vq-analysis { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.vq-analysis-item { padding: 10px 14px; background: #f8fafc; border-radius: 8px; font-size: 0.87rem; line-height: 1.65; }
+.vq-analysis-orig { color: #dc2626; text-decoration: line-through; }
+.vq-analysis-correct { color: #16a34a; font-weight: 700; }
+.vq-analysis-note { display: block; color: #64748b; font-size: 0.81rem; margin-top: 4px; }
+.theme-dark .vq-analysis-item { background: #252535; }
+.vq-answer-toggle { padding: 8px 18px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; font-weight: 600; font-size: 0.82rem; transition: background 0.12s, color 0.12s; }
+.vq-answer-toggle:hover { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-answer-toggle { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-answer-toggle:hover { background: #a78bfa; color: #1e1e2e; }
+.vq-answer-section { display: none; margin-top: 16px; }
+.vq-answer-section.shown { display: block; }
+.vq-answer-label { font-size: 0.9rem; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
+.theme-dark .vq-answer-label { color: #4ade80; }
+.vq-explanation { padding: 10px 14px; background: #f0fdf4; border-radius: 8px; font-size: 0.87rem; color: #334155; line-height: 1.65; border-left: 3px solid #22c55e; }
+.theme-dark .vq-explanation { background: #0f2018; color: #e2e8f0; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
 <div id="app-container" class="theme-white">
   <!-- TOOLBAR -->
   <div id="toolbar">
-    <!-- Drawing tools -->
-    <div class="tool-group">
-      <button class="tool-btn active" data-tool="navigate" title="포인터 (Esc)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
-      </button>
+    <!-- LEFT: 수업관리 + 제목 드롭다운 -->
+    <button class="tool-btn" id="btn-lesson-mgr" title="수업 관리 (L)" style="font-size:15px">📚</button>
+    <div id="lesson-nav-wrap">
+      <button id="lesson-title-bar" title="수업 전환 ▾"></button>
+      <div id="lesson-nav-dropdown" class="lnav-dropdown"></div>
     </div>
     <div class="tool-sep"></div>
-    <!-- Navigation -->
+    <!-- CENTER: Navigation -->
     <div class="tool-group">
       <button class="tool-btn" id="btn-prev" title="이전 (←)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span id="slide-counter">1 / 1</span>
+      <span id="slide-counter" title="클릭하여 슬라이드 이동">
+        <span id="slide-counter-text">1 / 1</span>
+        <input id="slide-jump-input" type="number" min="1"
+          style="display:none; width:40px; background:transparent; border:none;
+                 color:inherit; font:inherit; font-size:13px; text-align:center;
+                 outline:none; padding:0;" />
+      </span>
       <button class="tool-btn" id="btn-next" title="다음 (→)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
     <div class="tool-sep-wide"></div>
-    <!-- View controls -->
+    <!-- CENTER: View controls -->
     <div class="tool-group">
       <button class="tool-btn" id="btn-font-up" title="글꼴 크게 (+)">A+</button>
       <button class="tool-btn" id="btn-font-down" title="글꼴 작게 (-)">A-</button>
@@ -848,14 +990,32 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       <button class="tool-btn" id="btn-fullscreen" title="전체화면 (F11)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
-      <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기" style="color:#ef4444">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      <button class="tool-btn" id="btn-add-slide" title="빈 페이지 추가 (N)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       </button>
-      <button class="tool-btn" id="btn-lesson-mgr" title="수업 관리 (L)" style="font-size:15px">📚</button>
     </div>
-    <div id="lesson-nav-wrap">
-      <button id="lesson-title-bar" title="수업 전환 ▾"></button>
-      <div id="lesson-nav-dropdown" class="lnav-dropdown"></div>
+    <!-- SPACER: 오른쪽 도구 그룹을 끝으로 밀기 -->
+    <div class="tb-spacer"></div>
+    <!-- 페이지 지우기 (위험 버튼 — 드로잉툴과 분리) -->
+    <div class="tool-sep"></div>
+    <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    </button>
+    <!-- RIGHT: 포인터 + 펜 + 형광펜 + 지우개 -->
+    <div class="tool-sep"></div>
+    <div class="tool-group" id="toolbar-drawing-group">
+      <button class="tool-btn active" data-tool="navigate" title="포인터 (Esc / 1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="pen" title="펜 (2)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="highlighter" title="형광펜 (3)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="eraser" title="지우개 (4)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+      </button>
     </div>
   </div>
 
@@ -872,16 +1032,19 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       </button>
       <!-- Inner ring: tools -->
       <div class="rp-ring rp-ring-inner">
-        <button class="rp-item rp-tool" data-rp-tool="pen" data-rp-angle="0" title="펜">
+        <button class="rp-item rp-tool" data-rp-tool="navigate" data-rp-angle="0" title="포인터">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
+        </button>
+        <button class="rp-item rp-tool" data-rp-tool="pen" data-rp-angle="72" title="펜">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
         </button>
-        <button class="rp-item rp-tool" data-rp-tool="highlighter" data-rp-angle="90" title="형광펜">
+        <button class="rp-item rp-tool" data-rp-tool="highlighter" data-rp-angle="144" title="형광펜">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
         </button>
-        <button class="rp-item rp-tool" data-rp-tool="eraser" data-rp-angle="180" title="지우개">
+        <button class="rp-item rp-tool" data-rp-tool="eraser" data-rp-angle="216" title="지우개">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
         </button>
-        <button class="rp-item rp-tool" data-rp-tool="sidepanel" data-rp-angle="270" title="자료 패널">
+        <button class="rp-item rp-tool" data-rp-tool="sidepanel" data-rp-angle="288" title="자료 패널">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
         </button>
       </div>
@@ -924,6 +1087,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 
   <!-- SIDE PANEL -->
   <div id="side-panel">
+    <canvas id="panel-canvas"></canvas>
     <div id="panel-resize-handle"></div>
     <div class="panel-header">
       <span>자료</span>
@@ -990,10 +1154,9 @@ window.LESSON_LIBRARY.push({
 또는 순수 JSON 형식도 됩니다:
 { "title": "...", "exercises": [...], "slides": [...] }'></textarea>
           <div class="lm-hint">
-            💡 Claude Code에서 <code>/generate-lesson</code> 명령으로 자동 생성됩니다.<br>
-            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK<br>
-            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 (exercises[] 포함)<br>
-            &nbsp;&nbsp;&nbsp;• 순수 JSON <code>{...}</code> 형식 OK
+            💡 <strong>Claude.ai 프로젝트</strong>에 자료(PDF·텍스트) 첨부 → <code>.js</code> 출력 → 여기 붙여넣기<br>
+            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 또는 순수 JSON <code>{...}</code> OK<br>
+            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭도 OK
           </div>
           <div class="lm-actions">
             <button class="lm-btn lm-btn-primary" id="lm-btn-load">로드 & 저장</button>
@@ -1031,31 +1194,43 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
-</div>
 
-<!-- CLEAR PAGE CONFIRM MODAL -->
-<div id="cp-modal">
+  <!-- VARIANT QUESTION: Type Selection Modal (multi-select) -->
+  <div id="vq-modal" class="vq-backdrop hidden">
+    <div class="vq-modal">
+      <div class="vq-modal-header">
+        <span class="vq-modal-header-title" id="vq-modal-title">변형문제 유형 선택</span>
+        <button class="vq-modal-close" id="vq-modal-close">×</button>
+      </div>
+      <div id="vq-modal-body"></div>
+      <div class="vq-modal-footer">
+        <span class="vq-select-count" id="vq-select-count">0개 선택</span>
+        <button class="vq-confirm-btn" id="vq-confirm-btn" disabled>슬라이드 생성</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLEAR PAGE CONFIRM MODAL (inside app-container for fullscreen visibility) -->
+  <div id="cp-modal">
   <div class="cp-dialog">
     <div class="cp-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" width="18" height="18"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      현재 슬라이드 지우기
+      필기 지우기
     </div>
-    <div class="cp-desc">이 슬라이드의 모든 필기·밑줄이 삭제됩니다.<br>이 작업은 되돌릴 수 없습니다.</div>
+    <div class="cp-desc">지울 범위를 선택하세요.<br>이 작업은 되돌릴 수 없습니다.</div>
     <div class="cp-actions">
       <button class="cp-btn cp-btn-cancel" id="cp-cancel">취소</button>
-      <button class="cp-btn cp-btn-danger" id="cp-confirm">지우기</button>
+      <button class="cp-btn cp-btn-warning" id="cp-confirm">이 슬라이드만</button>
+      <button class="cp-btn cp-btn-danger" id="cp-confirm-all">전체 지우기</button>
     </div>
   </div>
 </div>
+</div><!-- end #app-container -->
 
-<!-- LESSON LIBRARY: 수업 파일들 (lessons/ 폴더의 .js 파일 추가) -->
+<!-- LESSON LIBRARY: lessons/ 폴더의 .js 파일 추가 -->
 <script>window.LESSON_LIBRARY = [];</script>
-<script src="lessons/sample_lesson.js"></script>
-<script src="lessons/ch03_gist.js"></script>
-<script src="lessons/ch04_claim.js"></script>
 <script src="lessons/yder_ch03.js"></script>
 <script src="lessons/yder_ch04.js"></script>
-<script src="lessons/march25_types.js"></script>
 
 <script>
 // ===== STATE =====
@@ -1074,6 +1249,8 @@ const STATE = {
   toolbarTimer: null,
   panelOpen: false,
   panelTab: 'vocab',
+  panelDrawings: [],
+  panelCurrentStroke: null,
   fullscreen: false,
   fontSize: 32,
   bgIndex: 0,
@@ -1095,7 +1272,10 @@ const OPTION_LABELS = ['①', '②', '③', '④', '⑤'];
 const RP_INNER_RADIUS = 75;
 const RP_OUTER_RADIUS = 130;
 const RP_DRAG_THRESHOLD = 8;
-const RP_PALETTE_KEY = 'wb_palette_pos';
+const RP_PALETTE_KEY   = 'wb_palette_pos';
+const DRAW_KEY_PREFIX  = 'wb_draw_';
+const NOTES_KEY_PREFIX = 'wb_notes_';
+const PANEL_WIDTH_KEY  = 'wb-panel-width';
 const RP_TOOL_ICONS = {
   navigate: '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>',
   pen: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
@@ -1236,7 +1416,8 @@ function applyPalettePos(pos) {
 
 function clampPalettePos(x, y) {
   const rect = document.querySelector('#slide-container').getBoundingClientRect();
-  const m = 35;
+  // 허브 중심이 화면 내에만 있으면 됨 (30px)
+  const m = 30;
   return { x: Math.max(m, Math.min(rect.width - m, x)), y: Math.max(m, Math.min(rect.height - m, y)) };
 }
 
@@ -1309,7 +1490,12 @@ function setupPaletteEvents() {
       e.stopPropagation();
       const t = btn.dataset.rpTool;
 
-      if (t === 'pen' || t === 'highlighter') {
+      if (t === 'navigate') {
+        setTool('navigate');
+        updatePaletteHub();
+        updatePaletteActiveStates();
+        collapsePalette();
+      } else if (t === 'pen' || t === 'highlighter') {
         // If already in level2 for this tool, collapse
         if (STATE.paletteLevel === 2 && btn.classList.contains('rp-selected')) {
           collapsePalette();
@@ -1415,6 +1601,8 @@ function init() {
   STATE.fontSize = s.defaultFontSize || 32;
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
+  // 저장된 필기 복원
+  STATE.slideDrawings = loadDrawingsLocal(getCurrentLessonId());
   applyBackground();
   slideContainer.style.fontSize = STATE.fontSize + 'px';
 
@@ -1426,6 +1614,7 @@ function init() {
   setupEvents();
   initPalette();
   setupPaletteEvents();
+  setupPanelCanvasEvents();
 
   $('#lesson-title-bar').textContent = STATE.lesson.title || '';
   $('#status-lesson').textContent = STATE.lesson.title || '';
@@ -1459,7 +1648,7 @@ function renderAllSlides() {
 function wrapSentences(escapedText) {
   if (!escapedText || !escapedText.trim()) return escapedText;
   // Split at sentence boundaries: .!? + space + uppercase (no lookbehind for old browser compat)
-  var result = escapedText.replace(/([.!?])\s+(?=[A-Z])/g, '$1</span> <span class="sentence">');
+  const result = escapedText.replace(/([.!?])\s+(?=[A-Z])/g, '$1</span> <span class="sentence">');
   return '<span class="sentence">' + result + '</span>';
 }
 
@@ -1473,7 +1662,10 @@ const RENDERERS = {
 
   passage(el, data, idx) {
     const exLabel = data.exercise_idx !== undefined ? `Ex${String(data.exercise_idx + 1).padStart(2, '0')} · ` : '';
-    let html = `<div class="slide-header">${exLabel}${esc(data.title || 'Passage')}</div>`;
+    const ex = STATE.lesson?.exercises?.[data.exercise_idx];
+    const hasVQ = ex?.variant_questions && Object.keys(ex.variant_questions).length > 0;
+    const vqBtn = hasVQ ? `<button class="vq-trigger-btn" data-vqidx="${data.exercise_idx}">변형문제</button>` : '';
+    let html = `<div class="slide-header"><span>${exLabel}${esc(data.title || 'Passage')}</span>${vqBtn}</div>`;
     let content = data.content || '';
     let result = wrapSentences(esc(content));
 
@@ -1492,7 +1684,7 @@ const RENDERERS = {
       `<div class="passage-notes" data-slide="${idx}">` +
         `<div class="passage-notes-header"><span>Notes</span></div>` +
         `<div class="passage-notes-body">` +
-          `<textarea placeholder="수업 중 메모를 입력하세요..." data-notes-slide="${idx}"></textarea>` +
+          `<div contenteditable="false" class="notes-area" data-notes-slide="${idx}"></div>` +
         `</div>` +
       `</div>` +
     `</div>`;
@@ -1670,13 +1862,22 @@ function renderPanel() {
 function goToSlide(index) {
   if (index < 0 || index >= STATE.totalSlides) return;
   saveNotes();
+  if (STATE.panelOpen) togglePanel();
   STATE.currentSlide = index;
+  STATE.twoFActive = false;   // 슬라이드 이동 시 2-F 상태 초기화
   slideTrack.style.transform = `translateX(-${index * 100}%)`;
   redrawCanvas(index);
   updateUI();
 }
 function nextSlide() { goToSlide(STATE.currentSlide + 1); }
 function prevSlide() { goToSlide(STATE.currentSlide - 1); }
+
+function addBlankSlide() {
+  if (!STATE.lesson) return;
+  STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, { type: 'blank' });
+  renderAllSlides();
+  goToSlide(STATE.currentSlide + 1);
+}
 
 // ===== 2-F TOGGLE =====
 // 첫 2문장 + 마지막 1문장만 표시, 나머지 숨김 토글
@@ -1713,6 +1914,7 @@ function toggle2F() {
     sentences[1].after(ellipsis);
     STATE.twoFActive = true;
   }
+  updateUI();
 }
 
 // ===== PASSAGE NOTES RESIZE =====
@@ -1758,19 +1960,37 @@ function startResize(e) {
   document.addEventListener('pointerup', onUp);
 }
 
-// 슬라이드 간 노트 내용 보존
-const notesStore = {};
+// 슬라이드 간 노트 내용 보존 (localStorage 영속화)
+// 저장 키: 'wb_notes_{lessonKey}' → JSON { [data-notes-slide값]: 텍스트 }
+function notesKey(lessonKey) { return NOTES_KEY_PREFIX + lessonKey; }
 function saveNotes() {
-  slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    const key = ta.dataset.notesSlide;
-    if (ta.value) notesStore[key] = ta.value;
+  const lessonKey = getCurrentLessonId();
+  if (!lessonKey) return;
+  const lsKey = notesKey(lessonKey);
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(lsKey) || '{}'); } catch(e) {}
+  slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
+    map[el.dataset.notesSlide] = el.innerText;
   });
+  try { localStorage.setItem(lsKey, JSON.stringify(map)); } catch(e) {}
 }
 function restoreNotes() {
-  slideTrack.querySelectorAll('textarea[data-notes-slide]').forEach(ta => {
-    const key = ta.dataset.notesSlide;
-    if (notesStore[key]) ta.value = notesStore[key];
+  const lessonKey = getCurrentLessonId();
+  if (!lessonKey) return;
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem(notesKey(lessonKey)) || '{}'); } catch(e) {}
+  slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
+    el.innerText = map[el.dataset.notesSlide] ?? '';
   });
+}
+function clearSlideNoteInStorage(lessonKey, slideIdx) {
+  if (!lessonKey) return;
+  const lsKey = notesKey(lessonKey);
+  try {
+    const map = JSON.parse(localStorage.getItem(lsKey) || '{}');
+    delete map[slideIdx];
+    localStorage.setItem(lsKey, JSON.stringify(map));
+  } catch(e) {}
 }
 
 
@@ -1803,6 +2023,16 @@ function onPointerDown(e) {
   const pos = getPointerPos(e);
 
   if (STATE.drawingMode === 'eraser') {
+    // Check text-hl FIRST (before stroke/pixel which always returns)
+    const hitEl = hitTestThrough(e.clientX, e.clientY);
+    if (hitEl) {
+      const sent = hitEl.closest('.sentence');
+      if (sent && sent.classList.contains('text-hl')) {
+        sent.classList.remove('text-hl');
+        STATE.textErasing = true;
+        return;
+      }
+    }
     STATE.isErasing = true;
     if (STATE.eraserMode === 'stroke') {
       handleEraser(pos.x, pos.y);
@@ -1817,19 +2047,6 @@ function onPointerDown(e) {
       };
     }
     return;
-  }
-
-  // Text-following eraser: if eraser tool over highlighted sentence, remove CSS highlight
-  if (STATE.drawingMode === 'eraser') {
-    const hitEl = hitTestThrough(e.clientX, e.clientY);
-    if (hitEl) {
-      const sent = hitEl.closest('.sentence');
-      if (sent && sent.classList.contains('text-hl')) {
-        sent.classList.remove('text-hl');
-        STATE.textErasing = true;
-        return;
-      }
-    }
   }
 
   // Text-following highlighter: if highlighter tool over passage text, apply CSS highlight
@@ -1929,6 +2146,7 @@ function onPointerUp(e) {
   STATE.slideDrawings[idx].push(STATE.currentStroke);
   STATE.undoStack[idx] = [];
   STATE.currentStroke = null;
+  saveDrawingsLocal();
 }
 
 function drawSegment(from, to, stroke) {
@@ -1969,6 +2187,149 @@ function redrawCanvas(slideIndex) {
   strokes.forEach(s => drawFullStroke(s));
 }
 
+// ===== PANEL CANVAS =====
+const panelCanvas = document.getElementById('panel-canvas');
+const panelCtx = panelCanvas.getContext('2d');
+
+function setupPanelCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = sidePanel.offsetWidth;
+  const h = sidePanel.offsetHeight;
+  if (!w || !h) return;
+  panelCanvas.width = Math.round(w * dpr);
+  panelCanvas.height = Math.round(h * dpr);
+  panelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redrawPanelCanvas();
+}
+
+function drawPanelSegment(from, to, stroke) {
+  panelCtx.save();
+  if (stroke.tool === 'pixelEraser') {
+    panelCtx.globalCompositeOperation = 'destination-out';
+    panelCtx.globalAlpha = 1.0;
+    panelCtx.lineCap = 'round'; panelCtx.lineJoin = 'round';
+  } else if (stroke.tool === 'highlighter') {
+    panelCtx.globalAlpha = 0.25;
+    panelCtx.lineCap = 'square'; panelCtx.lineJoin = 'miter';
+  } else {
+    panelCtx.globalAlpha = 1.0;
+    panelCtx.lineCap = 'round'; panelCtx.lineJoin = 'round';
+  }
+  panelCtx.strokeStyle = stroke.color;
+  panelCtx.lineWidth = stroke.width;
+  panelCtx.beginPath();
+  panelCtx.moveTo(from.x, from.y);
+  panelCtx.lineTo(to.x, to.y);
+  panelCtx.stroke();
+  panelCtx.restore();
+}
+
+function drawPanelFullStroke(stroke) {
+  if (stroke.points.length < 2) return;
+  for (let i = 1; i < stroke.points.length; i++) {
+    drawPanelSegment(stroke.points[i - 1], stroke.points[i], stroke);
+  }
+}
+
+function redrawPanelCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  panelCtx.clearRect(0, 0, panelCanvas.width / dpr, panelCanvas.height / dpr);
+  (STATE.panelDrawings || []).forEach(s => drawPanelFullStroke(s));
+}
+
+function handlePanelEraser(x, y) {
+  const strokes = STATE.panelDrawings;
+  if (!strokes || !strokes.length) return;
+  const THRESHOLD = 20;
+  for (let i = strokes.length - 1; i >= 0; i--) {
+    for (const pt of strokes[i].points) {
+      if (Math.hypot(pt.x - x, pt.y - y) < THRESHOLD) {
+        strokes.splice(i, 1);
+        redrawPanelCanvas();
+        return;
+      }
+    }
+  }
+}
+
+function getPanelPointerPos(e) {
+  const rect = panelCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top, pressure: e.pressure || 0.5 };
+}
+
+function setupPanelCanvasEvents() {
+  let panelDrawing = false, panelErasing = false;
+
+  panelCanvas.addEventListener('pointerdown', e => {
+    if (STATE.drawingMode === 'navigate') return;
+    e.preventDefault(); e.stopPropagation();
+    panelCanvas.setPointerCapture(e.pointerId);
+    const pos = getPanelPointerPos(e);
+
+    if (STATE.drawingMode === 'eraser') {
+      panelErasing = true;
+      if (STATE.eraserMode === 'stroke' || STATE.eraserMode === 'element') {
+        handlePanelEraser(pos.x, pos.y);
+      } else {
+        STATE.panelCurrentStroke = { points: [pos], color: '#000000', width: STATE.pixelEraserSize, tool: 'pixelEraser' };
+      }
+      return;
+    }
+
+    panelDrawing = true;
+    STATE.panelCurrentStroke = {
+      points: [pos],
+      color: STATE.penColor,
+      width: STATE.drawingMode === 'highlighter' ? STATE.penWidth * 5 : STATE.penWidth,
+      tool: STATE.drawingMode
+    };
+  });
+
+  panelCanvas.addEventListener('pointermove', e => {
+    if (!panelDrawing && !panelErasing) return;
+    e.preventDefault();
+    const pos = getPanelPointerPos(e);
+
+    if (panelErasing) {
+      if (STATE.eraserMode === 'stroke' || STATE.eraserMode === 'element') {
+        handlePanelEraser(pos.x, pos.y);
+      } else if (STATE.panelCurrentStroke) {
+        STATE.panelCurrentStroke.points.push(pos);
+        const pts = STATE.panelCurrentStroke.points;
+        drawPanelSegment(pts[pts.length - 2], pts[pts.length - 1], STATE.panelCurrentStroke);
+      }
+      return;
+    }
+
+    if (STATE.panelCurrentStroke) {
+      STATE.panelCurrentStroke.points.push(pos);
+      const pts = STATE.panelCurrentStroke.points;
+      if (pts.length >= 2) drawPanelSegment(pts[pts.length - 2], pts[pts.length - 1], STATE.panelCurrentStroke);
+    }
+  });
+
+  const endPanelDraw = () => {
+    if (panelErasing) {
+      if (STATE.eraserMode === 'pixel' && STATE.panelCurrentStroke && STATE.panelCurrentStroke.points.length > 1) {
+        STATE.panelDrawings.push(STATE.panelCurrentStroke);
+        redrawPanelCanvas();
+      }
+      STATE.panelCurrentStroke = null;
+      panelErasing = false;
+      return;
+    }
+    if (panelDrawing && STATE.panelCurrentStroke) {
+      STATE.panelDrawings.push(STATE.panelCurrentStroke);
+      STATE.panelCurrentStroke = null;
+    }
+    panelDrawing = false;
+  };
+  panelCanvas.addEventListener('pointerup', endPanelDraw);
+  panelCanvas.addEventListener('pointercancel', endPanelDraw);
+
+  new ResizeObserver(() => setupPanelCanvas()).observe(sidePanel);
+}
+
 function handleEraser(x, y) {
   const strokes = STATE.slideDrawings[STATE.currentSlide];
   if (!strokes || !strokes.length) return;
@@ -1993,6 +2354,7 @@ function clearDrawing() {
     STATE.undoStack[idx] = strokes.slice();
     STATE.slideDrawings[idx] = [];
     redrawCanvas(idx);
+    saveDrawingsLocal();
   }
 }
 
@@ -2004,6 +2366,7 @@ function undo() {
   if (!STATE.undoStack[idx]) STATE.undoStack[idx] = [];
   STATE.undoStack[idx].push(removed);
   redrawCanvas(idx);
+  saveDrawingsLocal();
 }
 
 function redo() {
@@ -2014,6 +2377,7 @@ function redo() {
   if (!STATE.slideDrawings[idx]) STATE.slideDrawings[idx] = [];
   STATE.slideDrawings[idx].push(restored);
   redrawCanvas(idx);
+  saveDrawingsLocal();
 }
 
 // ===== TOOL MANAGEMENT =====
@@ -2025,8 +2389,13 @@ function setTool(tool) {
   STATE.drawingMode = tool;
   if (tool === 'eraser') {
     canvas.className = STATE.eraserMode === 'pixel' ? 'mode-eraser-pixel' : 'mode-eraser';
+    panelCanvas.className = 'mode-eraser';
+  } else if (tool === 'navigate') {
+    canvas.className = 'mode-navigate';
+    panelCanvas.className = '';
   } else {
-    canvas.className = tool === 'navigate' ? 'mode-navigate' : '';
+    canvas.className = '';
+    panelCanvas.className = 'mode-draw';
   }
 
   $$('[data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
@@ -2080,6 +2449,8 @@ function toggleFullscreen() {
 function togglePanel() {
   STATE.panelOpen = !STATE.panelOpen;
   sidePanel.classList.toggle('open', STATE.panelOpen);
+  if (STATE.panelOpen) requestAnimationFrame(setupPanelCanvas);
+  updateUI();
 }
 
 // ===== BLACKOUT =====
@@ -2088,28 +2459,25 @@ function toggleBlackout() {
   blackoutEl.classList.toggle('active', STATE.blackout);
 }
 
-// ===== TOOLBAR AUTO-HIDE =====
+// ===== TOOLBAR AUTO-HIDE (비활성 — 항상 표시) =====
 function resetToolbarTimer() {
-  if (!STATE.toolbarVisible) {
-    toolbar.classList.remove('hidden');
-    STATE.toolbarVisible = true;
-  }
+  toolbar.classList.remove('hidden');
+  STATE.toolbarVisible = true;
   clearTimeout(STATE.toolbarTimer);
-  STATE.toolbarTimer = setTimeout(() => {
-    if (STATE.drawingMode !== 'navigate') return;
-    if ($('#lesson-nav-dropdown').classList.contains('open')) return;
-    toolbar.classList.add('hidden');
-    STATE.toolbarVisible = false;
-  }, 6000);
 }
 
 // ===== UI UPDATE =====
 function updateUI() {
-  $('#slide-counter').textContent = `${STATE.currentSlide + 1} / ${STATE.totalSlides}`;
+  $('#slide-counter-text').textContent = `${STATE.currentSlide + 1} / ${STATE.totalSlides}`;
   $('#status-slide').textContent = `Slide ${STATE.currentSlide + 1}/${STATE.totalSlides}`;
+  $('#btn-prev').disabled = STATE.currentSlide === 0;
+  $('#btn-next').disabled = STATE.currentSlide === STATE.totalSlides - 1;
   const toolName = TOOL_LABELS[STATE.drawingMode] || STATE.drawingMode;
   const extra = STATE.drawingMode === 'pen' || STATE.drawingMode === 'highlighter' ? ` (${STATE.penWidth}px)` : '';
   $('#status-tool').textContent = toolName + extra;
+  // 토글 버튼 active 상태 동기화
+  $('#btn-twoF').classList.toggle('active', STATE.twoFActive);
+  $('#btn-panel').classList.toggle('active', STATE.panelOpen);
 }
 
 // ===== EVENTS =====
@@ -2128,12 +2496,36 @@ function setupEvents() {
 
   $('#btn-prev').addEventListener('click', prevSlide);
   $('#btn-next').addEventListener('click', nextSlide);
+
+  // 슬라이드 번호 클릭 → 직접 입력 점프
+  const slideCounterText = $('#slide-counter-text');
+  const slideJumpInput   = $('#slide-jump-input');
+  $('#slide-counter').addEventListener('click', () => {
+    slideCounterText.style.display = 'none';
+    slideJumpInput.style.display   = 'inline-block';
+    slideJumpInput.value = STATE.currentSlide + 1;
+    slideJumpInput.max   = STATE.totalSlides;
+    slideJumpInput.select();
+    slideJumpInput.focus();
+  });
+  const commitJump = () => {
+    slideJumpInput.style.display   = 'none';
+    slideCounterText.style.display = 'inline';
+    const v = parseInt(slideJumpInput.value);
+    if (!isNaN(v)) goToSlide(Math.max(0, Math.min(STATE.totalSlides - 1, v - 1)));
+  };
+  slideJumpInput.addEventListener('blur', commitJump);
+  slideJumpInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.stopPropagation(); commitJump(); }
+    if (e.key === 'Escape') { slideJumpInput.style.display = 'none'; slideCounterText.style.display = 'inline'; }
+  });
   $('#btn-font-up').addEventListener('click', () => adjustFontSize(2));
   $('#btn-font-down').addEventListener('click', () => adjustFontSize(-2));
   $('#btn-bg').addEventListener('click', cycleBackground);
   $('#btn-twoF').addEventListener('click', toggle2F);
   $('#btn-panel').addEventListener('click', togglePanel);
   $('#btn-fullscreen').addEventListener('click', toggleFullscreen);
+  $('#btn-add-slide').addEventListener('click', addBlankSlide);
   $('#panel-close-btn').addEventListener('click', togglePanel);
   $$('.panel-tab').forEach(btn => btn.addEventListener('click', () => {
     STATE.panelTab = btn.dataset.tab;
@@ -2145,11 +2537,12 @@ function setupEvents() {
     window._panelResizeSetup = true;
     const handle = $('#panel-resize-handle');
     const panel  = $('#side-panel');
-    const MIN_W  = 240, MAX_W = 560;
+    const MIN_W  = 240;
+    const getMaxW = () => Math.round(slideContainer.offsetWidth * 0.4);
     let startX = 0, startW = 0, dragging = false;
 
     // 저장된 너비 복원 (페이지 로드 시 1회)
-    const saved = localStorage.getItem('wb-panel-width');
+    const saved = localStorage.getItem(PANEL_WIDTH_KEY);
     if (saved) document.documentElement.style.setProperty('--panel-width', saved);
 
     handle.addEventListener('pointerdown', e => {
@@ -2164,7 +2557,7 @@ function setupEvents() {
     });
     handle.addEventListener('pointermove', e => {
       if (!dragging) return;
-      const w = Math.max(MIN_W, Math.min(MAX_W, startW + (startX - e.clientX)));
+      const w = Math.max(MIN_W, Math.min(getMaxW(), startW + (startX - e.clientX)));
       document.documentElement.style.setProperty('--panel-width', Math.round(w) + 'px');
     });
     const endDrag = e => {
@@ -2174,15 +2567,32 @@ function setupEvents() {
       panel.classList.remove('resizing');
       document.body.classList.remove('panel-resizing');
       const w = getComputedStyle(document.documentElement).getPropertyValue('--panel-width').trim();
-      localStorage.setItem('wb-panel-width', w);
+      localStorage.setItem(PANEL_WIDTH_KEY, w);
     };
     handle.addEventListener('pointerup', endDrag);
     handle.addEventListener('pointercancel', endDrag);
   }
 
-  // Nav touch zones
-  $('#nav-prev').addEventListener('click', prevSlide);
-  $('#nav-next').addEventListener('click', nextSlide);
+  // Nav touch zones — handled on slide-container since nav-zone pointer-events are disabled
+  // (slide-track has z-index:6 > nav-zone z-index:5 to allow buttons inside to be clickable)
+  const navPrev = $('#nav-prev'), navNext = $('#nav-next');
+  slideContainer.addEventListener('click', e => {
+    if (e.target.closest('button, a, input, select, textarea, [role="button"]')) return;
+    const rect = slideContainer.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    if (ratio < 0.12) prevSlide();
+    else if (ratio > 0.88) nextSlide();
+  });
+  slideContainer.addEventListener('mousemove', e => {
+    const rect = slideContainer.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    navPrev.style.opacity = ratio < 0.12 ? '1' : '';
+    navNext.style.opacity = ratio > 0.88 ? '1' : '';
+  });
+  slideContainer.addEventListener('mouseleave', () => {
+    navPrev.style.opacity = '';
+    navNext.style.opacity = '';
+  });
 
   // Blackout dismiss
   blackoutEl.addEventListener('click', toggleBlackout);
@@ -2202,9 +2612,9 @@ function setupEvents() {
     }
   });
 
-  // Notes textarea: 키보드 이벤트 전파 차단 (슬라이드 전환 방지)
+  // Notes area: 키보드 이벤트 전파 차단 (슬라이드 전환 방지)
   slideTrack.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'TEXTAREA') e.stopPropagation();
+    if (e.target.classList.contains('notes-area')) e.stopPropagation();
   }, true);
 
   // Passage notes resize handles
@@ -2282,6 +2692,11 @@ function handleKey(e) {
   if (key === 'F11') { e.preventDefault(); toggleFullscreen(); return; }
   if (key === 'F5') { e.preventDefault(); toggleFullscreen(); return; }
 
+  // 빈 페이지 추가
+  if ((key === 'n' || key === 'N') && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); addBlankSlide(); return;
+  }
+
   // Lesson Manager
   if ((key === 'l' || key === 'L') && !e.ctrlKey && !e.metaKey) {
     e.preventDefault(); openLessonModal(); return;
@@ -2314,6 +2729,77 @@ function escRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ===== DRAWINGS PERSISTENCE (localStorage only) =====
+function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
+function saveDrawingsLocal() {
+  try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
+}
+function loadDrawingsLocal(lessonKey) {
+  try {
+    const key = DRAW_KEY_PREFIX + (lessonKey || '__default');
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+// ===== SUPABASE =====
+const SB_URL = 'https://kaucebkhvnzgtgzgnrvy.supabase.co';
+const SB_KEY = 'sb_publishable_jen7RSuHUMU6Or5tN126xQ_OFJ7AZ2e';
+let sb = null;
+try {
+  sb = window.supabase.createClient(SB_URL, SB_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
+} catch(e) { console.warn('Supabase init failed', e); }
+
+// DB → 로컬 동기화 (last-write-wins by saved_at)
+async function syncFromSupabase() {
+  if (!sb) return;
+  const { data, error } = await sb.from('lessons')
+    .select('lesson_key,title,data,saved_at')
+    .is('deleted_at', null);
+  if (error || !data) return;
+  const store = getLessonStore();
+  let changed = false;
+  data.forEach(row => {
+    if (row.lesson_key.startsWith('lib_')) return;
+    const local = store[row.lesson_key];
+    if (!local || row.saved_at > (local.savedAt ?? 0)) {
+      store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
+      changed = true;
+    }
+  });
+  if (changed) { saveLessonStoreLocal(store); renderLessonList?.(); }
+}
+
+// 로컬 → DB 동기화 (upsert, lib_ 제외)
+async function pushLessonsToSB(store) {
+  if (!sb) return;
+  const rows = Object.entries(store)
+    .filter(([key, entry]) => !key.startsWith('lib_') && entry.data)
+    .map(([lesson_key, entry]) => ({
+      lesson_key,
+      title: entry.data?.title ?? lesson_key,
+      data: entry.data,
+      saved_at: entry.savedAt ?? Date.now(),
+      deleted_at: null,
+      updated_at: new Date().toISOString()
+    }));
+  if (!rows.length) return;
+  try { await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' }); }
+  catch(e) { console.warn('SB push failed', e); }
+}
+
+// 소프트 삭제
+async function deleteFromSB(key) {
+  if (!sb || key.startsWith('lib_')) return;
+  try {
+    await sb.from('lessons')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('lesson_key', key);
+  } catch(e) { console.warn('SB delete failed', e); }
+}
+
 // ===== LESSON MANAGER =====
 const STORAGE_KEY = 'wb_lessons';
 const CURRENT_KEY = 'wb_current';
@@ -2321,8 +2807,12 @@ const CURRENT_KEY = 'wb_current';
 function getLessonStore() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
 }
-function saveLessonStore(store) {
+function saveLessonStoreLocal(store) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e) { /* localStorage unavailable */ }
+}
+function saveLessonStore(store) {
+  saveLessonStoreLocal(store);
+  pushLessonsToSB(store); // 논블로킹
 }
 function setCurrentLessonId(id) {
   try { localStorage.setItem(CURRENT_KEY, id); } catch(e) { /* localStorage unavailable */ }
@@ -2352,19 +2842,25 @@ function parseLessonInput(text) {
   return null;
 }
 
-function loadLessonData(data) {
+function loadLessonData(data, lessonKey) {
   STATE.lesson = data;
   const s = data.settings || {};
   STATE.fontSize = s.defaultFontSize || 32;
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
   STATE.currentSlide = 0;
-  STATE.slideDrawings = {};
+  STATE.slideDrawings = loadDrawingsLocal(lessonKey || getCurrentLessonId());
   STATE.undoStack = {};
   STATE.twoFActive = false;
-  Object.keys(notesStore).forEach(k => delete notesStore[k]);
+  STATE.isDrawing = false;
+  STATE.isErasing = false;
+  // 블랙아웃 해제
+  if (STATE.blackout) { STATE.blackout = false; blackoutEl.classList.remove('active'); }
+  // notes는 localStorage 기반 — 레슨 전환 시 별도 초기화 불필요
   // Close side panel if open
   if (STATE.panelOpen) { sidePanel.classList.remove('open'); STATE.panelOpen = false; }
+  // 도구 포인터로 초기화
+  setTool('navigate');
   applyBackground();
   slideContainer.style.fontSize = STATE.fontSize + 'px';
   renderAllSlides();
@@ -2381,9 +2877,98 @@ function loadLessonData(data) {
 
 function lmToast(msg) {
   const t = $('#lm-toast');
-  t.textContent = msg;
+  t.innerHTML = `<span>${msg}</span>`;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  setTimeout(() => { t.classList.remove('show'); t.innerHTML = ''; }, 2200);
+}
+
+// ── Undo toast (삭제 취소용) ──
+let pendingUndo = null;
+
+function showUndoToast(msg, onUndo) {
+  const t = $('#lm-toast');
+  t.innerHTML = `<span>${msg}</span><button id="lm-undo-btn">실행 취소</button><span id="lm-undo-countdown">5</span>`;
+  t.classList.add('show');
+  let sec = 5;
+  const tick = setInterval(() => {
+    sec--;
+    const cd = document.getElementById('lm-undo-countdown');
+    if (cd) cd.textContent = sec;
+    if (sec <= 0) clearInterval(tick);
+  }, 1000);
+  document.getElementById('lm-undo-btn').addEventListener('click', () => {
+    clearInterval(tick);
+    onUndo();
+  });
+  if (pendingUndo) pendingUndo._tick = tick;
+}
+
+function hideUndoToast() {
+  const t = $('#lm-toast');
+  t.classList.remove('show');
+  t.innerHTML = '';
+  if (pendingUndo?._tick) clearInterval(pendingUndo._tick);
+}
+
+// ── 실제 삭제 실행 (SB soft-delete) ──
+function flushPendingDelete() {
+  if (!pendingUndo) return;
+  Object.keys(pendingUndo.items)
+    .filter(id => !id.startsWith('lib_'))
+    .forEach(id => deleteFromSB(id));
+  pendingUndo = null;
+  hideUndoToast();
+}
+
+// ── 삭제 진입점 (개별 + 일괄 공통) ──
+function doDeleteLessons(ids) {
+  // 기존 pending 있으면 즉시 확정
+  if (pendingUndo) {
+    clearTimeout(pendingUndo.timer);
+    flushPendingDelete();
+  }
+  const s = getLessonStore();
+  const backup = {};
+  const currentWas = ids.includes(getCurrentLessonId()) ? getCurrentLessonId() : null;
+  ids.forEach(id => { if (s[id]) { backup[id] = s[id]; } delete s[id]; });
+  saveLessonStoreLocal(s); // SB push는 undo 시간 후에
+  if (currentWas) setCurrentLessonId('');
+  renderSavedList();
+
+  const label = ids.length === 1
+    ? `"${(backup[ids[0]]?.data?.title || ids[0])}" 삭제됨`
+    : `${ids.length}개 레슨 삭제됨`;
+
+  const timer = setTimeout(() => { flushPendingDelete(); }, 5000);
+  pendingUndo = { items: backup, timer, currentWas, _tick: null };
+
+  showUndoToast(`🗑 ${label}`, () => {
+    clearTimeout(pendingUndo.timer);
+    const s2 = getLessonStore();
+    Object.entries(pendingUndo.items).forEach(([id, entry]) => { s2[id] = entry; });
+    saveLessonStoreLocal(s2);
+    if (pendingUndo.currentWas) setCurrentLessonId(pendingUndo.currentWas);
+    pendingUndo = null;
+    hideUndoToast();
+    renderSavedList();
+    lmToast('↩ 복구됨');
+  });
+}
+
+// ── 제목 수정 + DB 동기화 ──
+function renameLesson(id, newTitle) {
+  if (!newTitle.trim()) return;
+  const s = getLessonStore();
+  if (!s[id]?.data) return;
+  s[id].data.title = newTitle.trim();
+  s[id].savedAt = Date.now();
+  saveLessonStore(s); // localStorage + SB upsert
+  if (getCurrentLessonId() === id) {
+    STATE.lesson.title = newTitle.trim();
+    $('#lesson-title-bar').textContent = newTitle.trim();
+    $('#status-lesson').textContent = newTitle.trim();
+  }
+  renderSavedList();
 }
 
 function openLessonModal() {
@@ -2402,18 +2987,31 @@ function closeLessonModal() {
 }
 
 // ===== CLEAR PAGE =====
+function _clearSlideEl(slideEl, idx) {
+  slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
+  slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
+  const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${idx}"]`);
+  if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
+}
 function clearPage() {
   const idx = STATE.currentSlide;
   STATE.slideDrawings[idx] = [];
   STATE.undoStack[idx] = [];
   redrawCanvas(idx);
+  saveDrawingsLocal();
   const slideEl = slideTrack.children[idx];
-  if (slideEl) {
-    slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
-    slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
-    const ta = slideEl.querySelector(`textarea[data-notes-slide="${idx}"]`);
-    if (ta) { ta.value = ''; delete notesStore[idx]; }
+  if (slideEl) _clearSlideEl(slideEl, idx);
+}
+function clearAllPages() {
+  const total = (STATE.lesson?.slides?.length) ?? 0;
+  for (let i = 0; i < total; i++) {
+    STATE.slideDrawings[i] = [];
+    STATE.undoStack[i] = [];
+    const slideEl = slideTrack.children[i];
+    if (slideEl) _clearSlideEl(slideEl, i);
   }
+  saveDrawingsLocal();
+  goToSlide(0);
 }
 function openClearPageModal() { $('#cp-modal').classList.add('open'); }
 function closeClearPageModal() { $('#cp-modal').classList.remove('open'); }
@@ -2470,6 +3068,7 @@ function renderSavedList() {
         <div class="lm-list-meta">${item.source === 'library' ? '📁 ' : ''}${countStr} · ${dateStr}</div>
       </div>
       <div class="lm-list-actions">
+        <button class="lm-list-btn rename" data-rename-id="${esc(k)}" title="제목 수정">✏️</button>
         <button class="lm-list-btn delete" data-delete-id="${esc(k)}" title="삭제">🗑</button>
       </div>
     </li>`;
@@ -2499,25 +3098,47 @@ function renderSavedList() {
       const id = el.dataset.lessonId;
       const item = getLessonStore()[id];
       if (item && item.data) {
-        loadLessonData(item.data);
         setCurrentLessonId(id);
+        loadLessonData(item.data, id);
         closeLessonModal();
         lmToast('✅ "' + (item.data.title || id) + '" 로드 완료');
       }
     });
   });
 
-  // 개별 삭제
+  // 개별 삭제 → undo toast
   list.querySelectorAll('[data-delete-id]').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = el.dataset.deleteId;
-      const s = getLessonStore();
-      delete s[id];
-      saveLessonStore(s);
-      if (getCurrentLessonId() === id) setCurrentLessonId('');
-      renderSavedList();
-      lmToast('삭제됨');
+      doDeleteLessons([el.dataset.deleteId]);
+    });
+  });
+
+  // 제목 인라인 수정
+  list.querySelectorAll('[data-rename-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.renameId;
+      const li = btn.closest('li');
+      const titleDiv = li.querySelector('.lm-list-title');
+      const currentTitle = getLessonStore()[id]?.data?.title || id;
+      // 이미 편집 중이면 무시
+      if (li.querySelector('.lm-rename-input')) return;
+      const input = document.createElement('input');
+      input.className = 'lm-rename-input';
+      input.value = currentTitle;
+      titleDiv.replaceWith(input);
+      input.focus(); input.select();
+      const commit = () => {
+        const newTitle = input.value.trim() || currentTitle;
+        renameLesson(id, newTitle);
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.removeEventListener('blur', commit); renderSavedList(); }
+        ev.stopPropagation();
+      });
     });
   });
 
@@ -2643,17 +3264,12 @@ function setupLessonManager() {
     $('#lm-bulk-bar').classList.add('hidden');
   });
 
-  // ── 일괄 삭제 ──
+  // ── 일괄 삭제 → undo toast ──
   $('#lm-bulk-delete').addEventListener('click', () => {
     const checked = $('#lm-saved-list').querySelectorAll('.lm-list-check:checked');
     if (!checked.length) return;
     const ids = Array.from(checked).map(cb => cb.dataset.checkId);
-    const s = getLessonStore();
-    ids.forEach(id => delete s[id]);
-    saveLessonStore(s);
-    if (ids.includes(getCurrentLessonId())) setCurrentLessonId('');
-    renderSavedList();
-    lmToast(`🗑 ${ids.length}개 삭제됨`);
+    doDeleteLessons(ids);
   });
 }
 
@@ -2744,7 +3360,7 @@ function renderLessonNavItems(dd) {
         const slideIdx = parseInt(subItem.dataset.slideIdx);
         if (id !== curId) {
           const storeItem = getLessonStore()[id];
-          if (storeItem && storeItem.data) { loadLessonData(storeItem.data); setCurrentLessonId(id); }
+          if (storeItem && storeItem.data) { setCurrentLessonId(id); loadLessonData(storeItem.data, id); }
         }
         if (slideIdx >= 0) goToSlide(slideIdx);
         closeLessonNav();
@@ -2761,8 +3377,8 @@ function renderLessonNavItems(dd) {
         if (id !== curId) {
           const storeItem = getLessonStore()[id];
           if (storeItem && storeItem.data) {
-            loadLessonData(storeItem.data);
             setCurrentLessonId(id);
+            loadLessonData(storeItem.data, id);
             lnavExpanded.add(id);
             renderLessonNavItems(dd);
           }
@@ -2877,6 +3493,7 @@ function renameLessonInStore(oldId, newTitle) {
   store[newTitle] = { ...store[oldId], data: { ...store[oldId].data, title: newTitle } };
   delete store[oldId];
   saveLessonStore(store);
+  deleteFromSB(oldId); // 논블로킹 (새 key는 pushLessonsToSB가 처리)
   if (getCurrentLessonId() === oldId) {
     setCurrentLessonId(newTitle);
     STATE.lesson.title = newTitle;
@@ -2953,6 +3570,7 @@ function importLessonLibrary() {
 
 // ===== START =====
 importLessonLibrary();
+syncFromSupabase(); // 논블로킹 — DB에서 최신 레슨 로드
 // Try loading saved lesson first
 if (!loadSavedOnStartup()) {
   // Use first library lesson, or LESSON_DATA fallback, or create fallback
@@ -2964,12 +3582,246 @@ if (!loadSavedOnStartup()) {
     setCurrentLessonId(id);
   }
 }
+// ===== VARIANT QUESTION SYSTEM =====
+
+const VQ_CATEGORIES = [
+  { label: '기본',     keys: ['제목', '주제', '요지'] },
+  { label: '사실일치', keys: ['사실일치_A', '사실일치_B', '사실일치_C', '사실일치_D'] },
+  { label: '문장순서', keys: ['문장순서_A', '문장순서_B'] },
+  { label: '문장삽입', keys: ['문장삽입_A', '문장삽입_B'] },
+  { label: '무관한문장', keys: ['무관한문장_A', '무관한문장_B'] },
+  { label: '어법추론', keys: ['어법추론_A', '어법추론_B', '어법추론_C', '어법추론_D'] },
+  { label: '빈칸추론', keys: ['빈칸추론_A', '빈칸추론_B', '빈칸추론_C'] },
+  { label: '어휘추론', keys: ['어휘추론_A', '어휘추론_B'] },
+  { label: '어법',     keys: ['어법분석', '어법선택_A', '어법선택_B', '어법수정_A', '어법수정_B'] },
+  { label: '어휘선택', keys: ['어휘선택_A', '어휘선택_B'] },
+];
+
+const VQ_BTN_LABELS = {
+  '제목': '제목', '주제': '주제', '요지': '요지', '어법분석': '분석',
+  '어법선택_A': '선A', '어법선택_B': '선B', '어법수정_A': '수A', '어법수정_B': '수B',
+};
+
+function vqBtnLabel(key) {
+  if (VQ_BTN_LABELS[key]) return VQ_BTN_LABELS[key];
+  const m = key.match(/_([A-D])$/);
+  return m ? m[1] : key;
+}
+
+let vqCurrentExerciseIdx = -1;
+
+// ── Modal: open with multi-select ──
+function openVariantModal(exerciseIdx) {
+  vqCurrentExerciseIdx = exerciseIdx;
+  const ex = STATE.lesson?.exercises?.[exerciseIdx];
+  const vq = ex?.variant_questions || {};
+  const availCount = Object.keys(vq).length;
+  $('#vq-modal-title').textContent =
+    `Ex${String(exerciseIdx + 1).padStart(2, '0')} 변형문제 — ${availCount}유형`;
+
+  // Pre-select already injected types for this exercise
+  const injectedKeys = new Set(
+    (STATE.lesson.slides || [])
+      .filter(s => s._injected && s.exercise_idx === exerciseIdx)
+      .map(s => s.vq_key)
+  );
+
+  let html = '';
+  VQ_CATEGORIES.forEach(cat => {
+    const btns = cat.keys.map(key => {
+      const has = !!vq[key];
+      const label = esc(vqBtnLabel(key));
+      const sel = injectedKeys.has(key) ? ' selected' : '';
+      return has
+        ? `<button class="vq-type-btn${sel}" data-vqkey="${key}" title="${key}">${label}</button>`
+        : `<button class="vq-type-btn" disabled title="${key} — 미준비">${label}</button>`;
+    }).join('');
+    html += `<div class="vq-cat-row">
+      <div class="vq-cat-label">${esc(cat.label)}</div>
+      <div class="vq-cat-btns">${btns}</div>
+    </div>`;
+  });
+
+  $('#vq-modal-body').innerHTML = html;
+  vqUpdateFooter();
+  $('#vq-modal').classList.remove('hidden');
+}
+
+function closeVariantModal() { $('#vq-modal').classList.add('hidden'); }
+
+function vqUpdateFooter() {
+  const selected = $('#vq-modal-body').querySelectorAll('.vq-type-btn.selected');
+  const n = selected.length;
+  $('#vq-select-count').textContent = `${n}개 선택`;
+  $('#vq-confirm-btn').disabled = n === 0;
+}
+
+// ── Slide injection ──
+function removeVQSlides(exerciseIdx) {
+  if (!STATE.lesson?.slides) return;
+  STATE.lesson.slides = STATE.lesson.slides.filter(
+    s => !(s._injected && s.exercise_idx === exerciseIdx)
+  );
+}
+
+function injectVQSlides(exerciseIdx, selectedKeys) {
+  removeVQSlides(exerciseIdx);
+  const slides = STATE.lesson.slides;
+  const passageIdx = slides.findIndex(s => s.type === 'passage' && s.exercise_idx === exerciseIdx);
+  if (passageIdx < 0) return;
+
+  const total = selectedKeys.length;
+  const newSlides = selectedKeys.map((key, i) => ({
+    type: 'vq_question',
+    exercise_idx: exerciseIdx,
+    vq_key: key,
+    _injected: true,
+    _vq_pos: i + 1,
+    _vq_total: total,
+  }));
+
+  slides.splice(passageIdx + 1, 0, ...newSlides);
+  const targetIdx = passageIdx + 1;
+  renderAllSlides();
+  goToSlide(targetIdx);
+}
+
+// ── Question content HTML (reused in slide renderer) ──
+function buildVariantQuestionHtml(vq) {
+  let html = '';
+  if (vq.passage_modified) {
+    html += `<div class="vq-passage-mod">${esc(vq.passage_modified)}</div>`;
+  }
+  if (vq.insert_sentence) {
+    html += `<div class="vq-insert-sentence"><strong>삽입 문장:</strong> ${esc(vq.insert_sentence)}</div>`;
+  }
+  if (vq.blocks && vq.blocks.length) {
+    html += '<div class="vq-blocks">';
+    vq.blocks.forEach(b => {
+      html += `<div class="vq-block"><span class="vq-block-label">${esc(b.label)}</span>${esc(b.text)}</div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.question) {
+    html += `<div class="vq-question-text">${esc(vq.question)}</div>`;
+  }
+  if (vq.options && vq.options.length) {
+    html += `<div class="vq-options-list" data-answer="${vq.answer ?? ''}">`;
+    vq.options.forEach((opt, i) => {
+      html += `<div class="vq-option" data-optidx="${i}">${esc(opt)}</div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.analysis && vq.analysis.length) {
+    html += '<div class="vq-analysis">';
+    vq.analysis.forEach(a => {
+      html += `<div class="vq-analysis-item">
+        <span class="vq-analysis-orig">${esc(a.original)}</span>
+        → <span class="vq-analysis-correct">${esc(a.correct)}</span>
+        <span class="vq-analysis-note">${esc(a.explanation || '')}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.answer !== undefined || vq.explanation) {
+    const labels = ['①','②','③','④','⑤'];
+    const ansText = vq.answer !== undefined ? `정답: ${labels[vq.answer] || (vq.answer + 1)}` : '';
+    html += `<button class="vq-answer-toggle">정답 보기</button>
+    <div class="vq-answer-section">
+      ${ansText ? `<div class="vq-answer-label">${ansText}</div>` : ''}
+      ${vq.explanation ? `<div class="vq-explanation">${esc(vq.explanation)}</div>` : ''}
+    </div>`;
+  }
+  return html;
+}
+
+// ── VQ slide renderer ──
+RENDERERS.vq_question = function(el, data) {
+  const ex = STATE.lesson?.exercises?.[data.exercise_idx];
+  const vq = ex?.variant_questions?.[data.vq_key];
+  const exLabel = `Ex${String(data.exercise_idx + 1).padStart(2, '0')}`;
+  const typeLabel = (data.vq_key || '').replace(/_/g, ' ');
+  const counter = `${data._vq_pos} / ${data._vq_total}`;
+
+  let html = `<div class="vq-slide-header">
+    <button class="vq-back-btn" data-vqback="${data.exercise_idx}">← 지문으로</button>
+    <span class="vq-slide-title">${exLabel} · ${esc(typeLabel)}</span>
+    <span class="vq-slide-counter">${counter}</span>
+  </div>`;
+
+  if (vq) {
+    html += buildVariantQuestionHtml(vq);
+  } else {
+    html += `<div class="vq-question-text" style="color:#94a3b8">문제 데이터가 없습니다.</div>`;
+  }
+  el.innerHTML = html;
+
+  // Answer toggle
+  const toggleBtn = el.querySelector('.vq-answer-toggle');
+  const ansSection = el.querySelector('.vq-answer-section');
+  if (toggleBtn && ansSection) {
+    toggleBtn.addEventListener('click', () => {
+      const shown = ansSection.classList.toggle('shown');
+      toggleBtn.textContent = shown ? '정답 숨기기' : '정답 보기';
+    });
+  }
+  // Option click — reveal answer
+  el.querySelectorAll('.vq-options-list').forEach(list => {
+    const correctIdx = parseInt(list.dataset.answer);
+    list.querySelectorAll('.vq-option').forEach((opt, i) => {
+      opt.addEventListener('click', () => {
+        list.querySelectorAll('.vq-option').forEach((o, j) => {
+          o.classList.toggle('correct', j === correctIdx);
+          if (j !== correctIdx) o.classList.remove('wrong');
+        });
+        if (i !== correctIdx) opt.classList.add('wrong');
+      });
+    });
+  });
+};
+
+// ── VQ event delegation ──
+$('#vq-modal-close').addEventListener('click', closeVariantModal);
+$('#vq-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeVariantModal(); });
+
+// Type button toggle (multi-select)
+$('#vq-modal-body').addEventListener('click', e => {
+  const btn = e.target.closest('.vq-type-btn');
+  if (!btn || btn.disabled) return;
+  btn.classList.toggle('selected');
+  vqUpdateFooter();
+});
+
+// Confirm → inject slides
+$('#vq-confirm-btn').addEventListener('click', () => {
+  const selectedKeys = Array.from($('#vq-modal-body').querySelectorAll('.vq-type-btn.selected'))
+    .map(b => b.dataset.vqkey);
+  closeVariantModal();
+  if (selectedKeys.length > 0) injectVQSlides(vqCurrentExerciseIdx, selectedKeys);
+});
+
+// Back-to-passage button — event delegation via slideTrack
+slideTrack.addEventListener('click', e => {
+  const backBtn = e.target.closest('.vq-back-btn');
+  if (backBtn) {
+    const exerciseIdx = parseInt(backBtn.dataset.vqback);
+    const passageIdx = STATE.lesson.slides.findIndex(
+      s => s.type === 'passage' && s.exercise_idx === exerciseIdx
+    );
+    if (passageIdx >= 0) goToSlide(passageIdx);
+    return;
+  }
+  const triggerBtn = e.target.closest('.vq-trigger-btn');
+  if (triggerBtn) openVariantModal(parseInt(triggerBtn.dataset.vqidx));
+});
+
 init();
 setupLessonManager();
 // Clear page
 $('#btn-clear-page').addEventListener('click', openClearPageModal);
 $('#cp-cancel').addEventListener('click', closeClearPageModal);
 $('#cp-confirm').addEventListener('click', () => { clearPage(); closeClearPageModal(); });
+$('#cp-confirm-all').addEventListener('click', () => { clearAllPages(); closeClearPageModal(); });
 $('#cp-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeClearPageModal(); });
 </script>
 </body>
