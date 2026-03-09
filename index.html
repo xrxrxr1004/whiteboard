@@ -194,6 +194,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 #slide-track {
   display: flex; height: 100%; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  position: relative; z-index: 6; /* above nav-zones (z:5) so interactive elements are clickable */
 }
 .slide {
   min-width: 100%; height: 100%; padding: 40px 60px 80px; overflow-y: auto;
@@ -217,7 +218,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 }
 
 /* Passage */
-.slide-header { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.slide-header { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
 /* Passage split layout */
 .passage-split { display: flex; flex: 1; gap: 0; min-height: 0; overflow: hidden; }
 .passage-left { flex: 1; overflow-y: auto; padding-right: 12px; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
@@ -356,6 +357,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   position: absolute; top: 0; width: 12%; height: 100%; z-index: 5;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; /* slide-track (z:6) is above nav-zones; clicks handled on slide-container */
 }
 .nav-zone:hover { opacity: 1; }
 .nav-zone svg { width: 48px; height: 48px; fill: rgba(0,0,0,0.15); }
@@ -850,6 +852,98 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 #drawing-canvas.mode-eraser-pixel { cursor: crosshair; }
 
 .theme-dark .rp-item.rp-active .rp-esize-dot { background: #a78bfa; }
+
+/* ====== VARIANT QUESTION SYSTEM ====== */
+.vq-trigger-btn {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px; text-transform: none;
+  padding: 3px 10px; border-radius: 10px;
+  border: 1.5px solid var(--purple); color: var(--purple);
+  background: transparent; cursor: pointer;
+  position: relative; z-index: 30;
+  transition: background 0.13s, color 0.13s;
+}
+.vq-trigger-btn:hover { background: var(--purple); color: #fff; }
+.theme-dark .vq-trigger-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-trigger-btn:hover { background: #a78bfa; color: #1e1e2e; }
+
+/* Type-selection modal */
+.vq-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1100; }
+.vq-backdrop.hidden { display: none; }
+.vq-modal { background: #fff; border-radius: 16px; padding: 20px 24px; width: 480px; max-width: 95vw; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+.theme-dark .vq-modal { background: #1e1e2e; }
+.vq-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.vq-modal-header-title { font-size: 0.88rem; font-weight: 700; color: #334155; }
+.theme-dark .vq-modal-header-title { color: #e2e8f0; }
+.vq-modal-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 18px; color: #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.vq-modal-close:hover { background: #f1f5f9; }
+.theme-dark .vq-modal-close:hover { background: #2d2d42; }
+.vq-cat-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; min-height: 28px; }
+.vq-cat-label { font-size: 0.72rem; font-weight: 600; color: #64748b; width: 68px; flex-shrink: 0; padding-top: 5px; text-transform: none; letter-spacing: 0; }
+.theme-dark .vq-cat-label { color: #94a3b8; }
+.vq-cat-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.vq-type-btn { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; transition: background 0.12s, color 0.12s; }
+.vq-type-btn:hover:not(:disabled) { background: #8b5cf6; color: #fff; }
+.vq-type-btn:disabled { border-color: #cbd5e1; color: #cbd5e1; cursor: not-allowed; opacity: 0.5; }
+.theme-dark .vq-type-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-type-btn:hover:not(:disabled) { background: #a78bfa; color: #1e1e2e; }
+.theme-dark .vq-type-btn:disabled { border-color: #3b4255; color: #3b4255; }
+
+/* Type button selected state + modal footer */
+.vq-type-btn.selected { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-type-btn.selected { background: #a78bfa; color: #1e1e2e; }
+.vq-modal-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+.theme-dark .vq-modal-footer { border-top-color: #2d2d42; }
+.vq-select-count { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+.theme-dark .vq-select-count { color: #94a3b8; }
+.vq-confirm-btn { padding: 7px 20px; border-radius: 8px; background: #8b5cf6; color: #fff; border: none; cursor: pointer; font-weight: 700; font-size: 0.82rem; transition: background 0.12s; }
+.vq-confirm-btn:hover { background: #7c3aed; }
+.vq-confirm-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+.theme-dark .vq-confirm-btn { background: #a78bfa; color: #1e1e2e; }
+.theme-dark .vq-confirm-btn:hover { background: #8b5cf6; }
+/* vq_question slide */
+.vq-slide-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid #ede9fe; }
+.theme-dark .vq-slide-header { border-bottom-color: #2d2040; }
+.vq-back-btn { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; flex-shrink: 0; position: relative; z-index: 30; transition: background 0.12s, color 0.12s; }
+.vq-back-btn:hover { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-back-btn { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-back-btn:hover { background: #a78bfa; color: #1e1e2e; }
+.vq-slide-title { font-size: 0.75em; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 2px; flex: 1; }
+.vq-slide-counter { font-size: 0.75rem; color: #94a3b8; font-weight: 600; flex-shrink: 0; }
+.vq-passage-mod { background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 14px 16px; font-size: 0.88rem; line-height: 1.8; margin-bottom: 16px; color: #334155; white-space: pre-wrap; }
+.theme-dark .vq-passage-mod { background: #2a2710; border-color: #4a4416; color: #e2e8f0; }
+.vq-insert-sentence { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px; font-size: 0.87rem; margin-bottom: 14px; color: #166534; line-height: 1.65; }
+.theme-dark .vq-insert-sentence { background: #0f2018; border-color: #166534; color: #86efac; }
+.vq-blocks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.vq-block { padding: 10px 14px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #8b5cf6; font-size: 0.87rem; line-height: 1.75; }
+.vq-block-label { font-weight: 700; color: #8b5cf6; margin-right: 8px; }
+.theme-dark .vq-block { background: #252535; }
+.vq-question-text { font-size: 0.9rem; font-weight: 600; color: #1e293b; margin-bottom: 14px; line-height: 1.6; }
+.theme-dark .vq-question-text { color: #e2e8f0; }
+.vq-options-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.vq-option { padding: 9px 14px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.87rem; cursor: pointer; transition: border-color 0.12s, background 0.12s; color: #334155; line-height: 1.55; }
+.vq-option:hover { border-color: #8b5cf6; background: #faf5ff; }
+.vq-option.correct { background: #dcfce7; border-color: #22c55e; color: #166534; font-weight: 600; }
+.vq-option.wrong { background: #fee2e2; border-color: #f87171; color: #991b1b; }
+.theme-dark .vq-option { border-color: #374151; color: #e2e8f0; }
+.theme-dark .vq-option:hover { border-color: #a78bfa; background: #1e1535; }
+.theme-dark .vq-option.correct { background: #0f2018; border-color: #22c55e; color: #86efac; }
+.theme-dark .vq-option.wrong { background: #200f0f; border-color: #f87171; color: #fca5a5; }
+.vq-analysis { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.vq-analysis-item { padding: 10px 14px; background: #f8fafc; border-radius: 8px; font-size: 0.87rem; line-height: 1.65; }
+.vq-analysis-orig { color: #dc2626; text-decoration: line-through; }
+.vq-analysis-correct { color: #16a34a; font-weight: 700; }
+.vq-analysis-note { display: block; color: #64748b; font-size: 0.81rem; margin-top: 4px; }
+.theme-dark .vq-analysis-item { background: #252535; }
+.vq-answer-toggle { padding: 8px 18px; border-radius: 8px; border: 1.5px solid #8b5cf6; color: #8b5cf6; background: transparent; cursor: pointer; font-weight: 600; font-size: 0.82rem; transition: background 0.12s, color 0.12s; }
+.vq-answer-toggle:hover { background: #8b5cf6; color: #fff; }
+.theme-dark .vq-answer-toggle { border-color: #a78bfa; color: #a78bfa; }
+.theme-dark .vq-answer-toggle:hover { background: #a78bfa; color: #1e1e2e; }
+.vq-answer-section { display: none; margin-top: 16px; }
+.vq-answer-section.shown { display: block; }
+.vq-answer-label { font-size: 0.9rem; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
+.theme-dark .vq-answer-label { color: #4ade80; }
+.vq-explanation { padding: 10px 14px; background: #f0fdf4; border-radius: 8px; font-size: 0.87rem; color: #334155; line-height: 1.65; border-left: 3px solid #22c55e; }
+.theme-dark .vq-explanation { background: #0f2018; color: #e2e8f0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -1057,10 +1151,9 @@ window.LESSON_LIBRARY.push({
 또는 순수 JSON 형식도 됩니다:
 { "title": "...", "exercises": [...], "slides": [...] }'></textarea>
           <div class="lm-hint">
-            💡 Claude Code에서 <code>/generate-lesson</code> 명령으로 자동 생성됩니다.<br>
-            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭 OK<br>
-            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 (exercises[] 포함)<br>
-            &nbsp;&nbsp;&nbsp;• 순수 JSON <code>{...}</code> 형식 OK
+            💡 <strong>Claude.ai 프로젝트</strong>에 자료(PDF·텍스트) 첨부 → <code>.js</code> 출력 → 여기 붙여넣기<br>
+            &nbsp;&nbsp;&nbsp;• <code>LESSON_LIBRARY.push({...})</code> 형식 또는 순수 JSON <code>{...}</code> OK<br>
+            &nbsp;&nbsp;&nbsp;• <code>lessons/*.js</code> 파일 직접 드롭도 OK
           </div>
           <div class="lm-actions">
             <button class="lm-btn lm-btn-primary" id="lm-btn-load">로드 & 저장</button>
@@ -1098,6 +1191,21 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
+
+  <!-- VARIANT QUESTION: Type Selection Modal (multi-select) -->
+  <div id="vq-modal" class="vq-backdrop hidden">
+    <div class="vq-modal">
+      <div class="vq-modal-header">
+        <span class="vq-modal-header-title" id="vq-modal-title">변형문제 유형 선택</span>
+        <button class="vq-modal-close" id="vq-modal-close">×</button>
+      </div>
+      <div id="vq-modal-body"></div>
+      <div class="vq-modal-footer">
+        <span class="vq-select-count" id="vq-select-count">0개 선택</span>
+        <button class="vq-confirm-btn" id="vq-confirm-btn" disabled>슬라이드 생성</button>
+      </div>
+    </div>
+  </div>
 
   <!-- CLEAR PAGE CONFIRM MODAL (inside app-container for fullscreen visibility) -->
   <div id="cp-modal">
@@ -1551,7 +1659,10 @@ const RENDERERS = {
 
   passage(el, data, idx) {
     const exLabel = data.exercise_idx !== undefined ? `Ex${String(data.exercise_idx + 1).padStart(2, '0')} · ` : '';
-    let html = `<div class="slide-header">${exLabel}${esc(data.title || 'Passage')}</div>`;
+    const ex = STATE.lesson?.exercises?.[data.exercise_idx];
+    const hasVQ = ex?.variant_questions && Object.keys(ex.variant_questions).length > 0;
+    const vqBtn = hasVQ ? `<button class="vq-trigger-btn" data-vqidx="${data.exercise_idx}">변형문제</button>` : '';
+    let html = `<div class="slide-header"><span>${exLabel}${esc(data.title || 'Passage')}</span>${vqBtn}</div>`;
     let content = data.content || '';
     let result = wrapSentences(esc(content));
 
@@ -2445,9 +2556,26 @@ function setupEvents() {
     handle.addEventListener('pointercancel', endDrag);
   }
 
-  // Nav touch zones
-  $('#nav-prev').addEventListener('click', prevSlide);
-  $('#nav-next').addEventListener('click', nextSlide);
+  // Nav touch zones — handled on slide-container since nav-zone pointer-events are disabled
+  // (slide-track has z-index:6 > nav-zone z-index:5 to allow buttons inside to be clickable)
+  const navPrev = $('#nav-prev'), navNext = $('#nav-next');
+  slideContainer.addEventListener('click', e => {
+    if (e.target.closest('button, a, input, select, textarea, [role="button"]')) return;
+    const rect = slideContainer.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    if (ratio < 0.12) prevSlide();
+    else if (ratio > 0.88) nextSlide();
+  });
+  slideContainer.addEventListener('mousemove', e => {
+    const rect = slideContainer.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    navPrev.style.opacity = ratio < 0.12 ? '1' : '';
+    navNext.style.opacity = ratio > 0.88 ? '1' : '';
+  });
+  slideContainer.addEventListener('mouseleave', () => {
+    navPrev.style.opacity = '';
+    navNext.style.opacity = '';
+  });
 
   // Blackout dismiss
   blackoutEl.addEventListener('click', toggleBlackout);
@@ -2565,12 +2693,8 @@ function handleKey(e) {
 // Hit-test through the canvas overlay to find elements underneath
 function hitTestThrough(x, y) {
   canvas.style.pointerEvents = 'none';
-  // Also disable nav-zones so left/right 12% areas don't intercept
-  const navZones = document.querySelectorAll('.nav-zone');
-  navZones.forEach(z => (z.style.pointerEvents = 'none'));
   const el = document.elementFromPoint(x, y);
   canvas.style.pointerEvents = '';
-  navZones.forEach(z => (z.style.pointerEvents = ''));
   return el;
 }
 
@@ -3430,6 +3554,239 @@ if (!loadSavedOnStartup()) {
     setCurrentLessonId(id);
   }
 }
+// ===== VARIANT QUESTION SYSTEM =====
+
+const VQ_CATEGORIES = [
+  { label: '기본',     keys: ['제목', '주제', '요지'] },
+  { label: '사실일치', keys: ['사실일치_A', '사실일치_B', '사실일치_C', '사실일치_D'] },
+  { label: '문장순서', keys: ['문장순서_A', '문장순서_B'] },
+  { label: '문장삽입', keys: ['문장삽입_A', '문장삽입_B'] },
+  { label: '무관한문장', keys: ['무관한문장_A', '무관한문장_B'] },
+  { label: '어법추론', keys: ['어법추론_A', '어법추론_B', '어법추론_C', '어법추론_D'] },
+  { label: '빈칸추론', keys: ['빈칸추론_A', '빈칸추론_B', '빈칸추론_C'] },
+  { label: '어휘추론', keys: ['어휘추론_A', '어휘추론_B'] },
+  { label: '어법',     keys: ['어법분석', '어법선택_A', '어법선택_B', '어법수정_A', '어법수정_B'] },
+  { label: '어휘선택', keys: ['어휘선택_A', '어휘선택_B'] },
+];
+
+const VQ_BTN_LABELS = {
+  '제목': '제목', '주제': '주제', '요지': '요지', '어법분석': '분석',
+  '어법선택_A': '선A', '어법선택_B': '선B', '어법수정_A': '수A', '어법수정_B': '수B',
+};
+
+function vqBtnLabel(key) {
+  if (VQ_BTN_LABELS[key]) return VQ_BTN_LABELS[key];
+  const m = key.match(/_([A-D])$/);
+  return m ? m[1] : key;
+}
+
+let vqCurrentExerciseIdx = -1;
+
+// ── Modal: open with multi-select ──
+function openVariantModal(exerciseIdx) {
+  vqCurrentExerciseIdx = exerciseIdx;
+  const ex = STATE.lesson?.exercises?.[exerciseIdx];
+  const vq = ex?.variant_questions || {};
+  const availCount = Object.keys(vq).length;
+  $('#vq-modal-title').textContent =
+    `Ex${String(exerciseIdx + 1).padStart(2, '0')} 변형문제 — ${availCount}유형`;
+
+  // Pre-select already injected types for this exercise
+  const injectedKeys = new Set(
+    (STATE.lesson.slides || [])
+      .filter(s => s._injected && s.exercise_idx === exerciseIdx)
+      .map(s => s.vq_key)
+  );
+
+  let html = '';
+  VQ_CATEGORIES.forEach(cat => {
+    const btns = cat.keys.map(key => {
+      const has = !!vq[key];
+      const label = esc(vqBtnLabel(key));
+      const sel = injectedKeys.has(key) ? ' selected' : '';
+      return has
+        ? `<button class="vq-type-btn${sel}" data-vqkey="${key}" title="${key}">${label}</button>`
+        : `<button class="vq-type-btn" disabled title="${key} — 미준비">${label}</button>`;
+    }).join('');
+    html += `<div class="vq-cat-row">
+      <div class="vq-cat-label">${esc(cat.label)}</div>
+      <div class="vq-cat-btns">${btns}</div>
+    </div>`;
+  });
+
+  $('#vq-modal-body').innerHTML = html;
+  vqUpdateFooter();
+  $('#vq-modal').classList.remove('hidden');
+}
+
+function closeVariantModal() { $('#vq-modal').classList.add('hidden'); }
+
+function vqUpdateFooter() {
+  const selected = $('#vq-modal-body').querySelectorAll('.vq-type-btn.selected');
+  const n = selected.length;
+  $('#vq-select-count').textContent = `${n}개 선택`;
+  $('#vq-confirm-btn').disabled = n === 0;
+}
+
+// ── Slide injection ──
+function removeVQSlides(exerciseIdx) {
+  if (!STATE.lesson?.slides) return;
+  STATE.lesson.slides = STATE.lesson.slides.filter(
+    s => !(s._injected && s.exercise_idx === exerciseIdx)
+  );
+}
+
+function injectVQSlides(exerciseIdx, selectedKeys) {
+  removeVQSlides(exerciseIdx);
+  const slides = STATE.lesson.slides;
+  const passageIdx = slides.findIndex(s => s.type === 'passage' && s.exercise_idx === exerciseIdx);
+  if (passageIdx < 0) return;
+
+  const total = selectedKeys.length;
+  const newSlides = selectedKeys.map((key, i) => ({
+    type: 'vq_question',
+    exercise_idx: exerciseIdx,
+    vq_key: key,
+    _injected: true,
+    _vq_pos: i + 1,
+    _vq_total: total,
+  }));
+
+  slides.splice(passageIdx + 1, 0, ...newSlides);
+  const targetIdx = passageIdx + 1;
+  renderAllSlides();
+  goToSlide(targetIdx);
+}
+
+// ── Question content HTML (reused in slide renderer) ──
+function buildVariantQuestionHtml(vq) {
+  let html = '';
+  if (vq.passage_modified) {
+    html += `<div class="vq-passage-mod">${esc(vq.passage_modified)}</div>`;
+  }
+  if (vq.insert_sentence) {
+    html += `<div class="vq-insert-sentence"><strong>삽입 문장:</strong> ${esc(vq.insert_sentence)}</div>`;
+  }
+  if (vq.blocks && vq.blocks.length) {
+    html += '<div class="vq-blocks">';
+    vq.blocks.forEach(b => {
+      html += `<div class="vq-block"><span class="vq-block-label">${esc(b.label)}</span>${esc(b.text)}</div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.question) {
+    html += `<div class="vq-question-text">${esc(vq.question)}</div>`;
+  }
+  if (vq.options && vq.options.length) {
+    html += `<div class="vq-options-list" data-answer="${vq.answer ?? ''}">`;
+    vq.options.forEach((opt, i) => {
+      html += `<div class="vq-option" data-optidx="${i}">${esc(opt)}</div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.analysis && vq.analysis.length) {
+    html += '<div class="vq-analysis">';
+    vq.analysis.forEach(a => {
+      html += `<div class="vq-analysis-item">
+        <span class="vq-analysis-orig">${esc(a.original)}</span>
+        → <span class="vq-analysis-correct">${esc(a.correct)}</span>
+        <span class="vq-analysis-note">${esc(a.explanation || '')}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  if (vq.answer !== undefined || vq.explanation) {
+    const labels = ['①','②','③','④','⑤'];
+    const ansText = vq.answer !== undefined ? `정답: ${labels[vq.answer] || (vq.answer + 1)}` : '';
+    html += `<button class="vq-answer-toggle">정답 보기</button>
+    <div class="vq-answer-section">
+      ${ansText ? `<div class="vq-answer-label">${ansText}</div>` : ''}
+      ${vq.explanation ? `<div class="vq-explanation">${esc(vq.explanation)}</div>` : ''}
+    </div>`;
+  }
+  return html;
+}
+
+// ── VQ slide renderer ──
+RENDERERS.vq_question = function(el, data) {
+  const ex = STATE.lesson?.exercises?.[data.exercise_idx];
+  const vq = ex?.variant_questions?.[data.vq_key];
+  const exLabel = `Ex${String(data.exercise_idx + 1).padStart(2, '0')}`;
+  const typeLabel = (data.vq_key || '').replace(/_/g, ' ');
+  const counter = `${data._vq_pos} / ${data._vq_total}`;
+
+  let html = `<div class="vq-slide-header">
+    <button class="vq-back-btn" data-vqback="${data.exercise_idx}">← 지문으로</button>
+    <span class="vq-slide-title">${exLabel} · ${esc(typeLabel)}</span>
+    <span class="vq-slide-counter">${counter}</span>
+  </div>`;
+
+  if (vq) {
+    html += buildVariantQuestionHtml(vq);
+  } else {
+    html += `<div class="vq-question-text" style="color:#94a3b8">문제 데이터가 없습니다.</div>`;
+  }
+  el.innerHTML = html;
+
+  // Answer toggle
+  const toggleBtn = el.querySelector('.vq-answer-toggle');
+  const ansSection = el.querySelector('.vq-answer-section');
+  if (toggleBtn && ansSection) {
+    toggleBtn.addEventListener('click', () => {
+      const shown = ansSection.classList.toggle('shown');
+      toggleBtn.textContent = shown ? '정답 숨기기' : '정답 보기';
+    });
+  }
+  // Option click — reveal answer
+  el.querySelectorAll('.vq-options-list').forEach(list => {
+    const correctIdx = parseInt(list.dataset.answer);
+    list.querySelectorAll('.vq-option').forEach((opt, i) => {
+      opt.addEventListener('click', () => {
+        list.querySelectorAll('.vq-option').forEach((o, j) => {
+          o.classList.toggle('correct', j === correctIdx);
+          if (j !== correctIdx) o.classList.remove('wrong');
+        });
+        if (i !== correctIdx) opt.classList.add('wrong');
+      });
+    });
+  });
+};
+
+// ── VQ event delegation ──
+$('#vq-modal-close').addEventListener('click', closeVariantModal);
+$('#vq-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeVariantModal(); });
+
+// Type button toggle (multi-select)
+$('#vq-modal-body').addEventListener('click', e => {
+  const btn = e.target.closest('.vq-type-btn');
+  if (!btn || btn.disabled) return;
+  btn.classList.toggle('selected');
+  vqUpdateFooter();
+});
+
+// Confirm → inject slides
+$('#vq-confirm-btn').addEventListener('click', () => {
+  const selectedKeys = Array.from($('#vq-modal-body').querySelectorAll('.vq-type-btn.selected'))
+    .map(b => b.dataset.vqkey);
+  closeVariantModal();
+  if (selectedKeys.length > 0) injectVQSlides(vqCurrentExerciseIdx, selectedKeys);
+});
+
+// Back-to-passage button — event delegation via slideTrack
+slideTrack.addEventListener('click', e => {
+  const backBtn = e.target.closest('.vq-back-btn');
+  if (backBtn) {
+    const exerciseIdx = parseInt(backBtn.dataset.vqback);
+    const passageIdx = STATE.lesson.slides.findIndex(
+      s => s.type === 'passage' && s.exercise_idx === exerciseIdx
+    );
+    if (passageIdx >= 0) goToSlide(passageIdx);
+    return;
+  }
+  const triggerBtn = e.target.closest('.vq-trigger-btn');
+  if (triggerBtn) openVariantModal(parseInt(triggerBtn.dataset.vqidx));
+});
+
 init();
 setupLessonManager();
 // Clear page
