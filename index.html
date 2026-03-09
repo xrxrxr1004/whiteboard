@@ -2769,7 +2769,7 @@ async function syncFromSupabase() {
       changed = true;
     }
   });
-  if (changed) { saveLessonStoreLocal(store); renderLessonList?.(); }
+  if (changed) { saveLessonStoreLocal(store); renderSavedList?.(); }
 }
 
 // 로컬 → DB 동기화 (upsert, lib_ 제외)
@@ -2786,8 +2786,13 @@ async function pushLessonsToSB(store) {
       updated_at: new Date().toISOString()
     }));
   if (!rows.length) return;
-  try { await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' }); }
-  catch(e) { console.warn('SB push failed', e); }
+  try {
+    const { error } = await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' });
+    if (error) throw error;
+  } catch(e) {
+    console.error('SB push failed', e);
+    lmToast?.('⚠️ DB 저장 실패 — 로컬에만 저장됨');
+  }
 }
 
 // 소프트 삭제
