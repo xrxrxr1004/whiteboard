@@ -97,6 +97,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .tool-group { display: flex; align-items: center; gap: 2px; }
 .tool-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.15); margin: 0 6px; }
 .tool-sep-wide { width: 1px; height: 32px; background: rgba(255,255,255,0.25); margin: 0 10px; }
+.tb-spacer { flex: 1; }
+#btn-clear-page { color: #ef4444; }
 .tool-btn {
   min-width: var(--touch-target); height: var(--touch-target);
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -896,10 +898,10 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       </button>
     </div>
     <!-- SPACER: 오른쪽 도구 그룹을 끝으로 밀기 -->
-    <div style="flex:1"></div>
+    <div class="tb-spacer"></div>
     <!-- 페이지 지우기 (위험 버튼 — 드로잉툴과 분리) -->
     <div class="tool-sep"></div>
-    <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기" style="color:#ef4444">
+    <button class="tool-btn" id="btn-clear-page" title="현재 슬라이드 전체 지우기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
     </button>
     <!-- RIGHT: 포인터 + 펜 + 형광펜 + 지우개 -->
@@ -1159,7 +1161,10 @@ const OPTION_LABELS = ['①', '②', '③', '④', '⑤'];
 const RP_INNER_RADIUS = 75;
 const RP_OUTER_RADIUS = 130;
 const RP_DRAG_THRESHOLD = 8;
-const RP_PALETTE_KEY = 'wb_palette_pos';
+const RP_PALETTE_KEY   = 'wb_palette_pos';
+const DRAW_KEY_PREFIX  = 'wb_draw_';
+const NOTES_KEY_PREFIX = 'wb_notes_';
+const PANEL_WIDTH_KEY  = 'wb-panel-width';
 const RP_TOOL_ICONS = {
   navigate: '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/>',
   pen: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
@@ -1532,7 +1537,7 @@ function renderAllSlides() {
 function wrapSentences(escapedText) {
   if (!escapedText || !escapedText.trim()) return escapedText;
   // Split at sentence boundaries: .!? + space + uppercase (no lookbehind for old browser compat)
-  var result = escapedText.replace(/([.!?])\s+(?=[A-Z])/g, '$1</span> <span class="sentence">');
+  const result = escapedText.replace(/([.!?])\s+(?=[A-Z])/g, '$1</span> <span class="sentence">');
   return '<span class="sentence">' + result + '</span>';
 }
 
@@ -1834,10 +1839,11 @@ function startResize(e) {
 
 // 슬라이드 간 노트 내용 보존 (localStorage 영속화)
 // 저장 키: 'wb_notes_{lessonKey}' → JSON { [data-notes-slide값]: 텍스트 }
+function notesKey(lessonKey) { return NOTES_KEY_PREFIX + lessonKey; }
 function saveNotes() {
   const lessonKey = getCurrentLessonId();
   if (!lessonKey) return;
-  const lsKey = 'wb_notes_' + lessonKey;
+  const lsKey = notesKey(lessonKey);
   let map = {};
   try { map = JSON.parse(localStorage.getItem(lsKey) || '{}'); } catch(e) {}
   slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
@@ -1849,14 +1855,14 @@ function restoreNotes() {
   const lessonKey = getCurrentLessonId();
   if (!lessonKey) return;
   let map = {};
-  try { map = JSON.parse(localStorage.getItem('wb_notes_' + lessonKey) || '{}'); } catch(e) {}
+  try { map = JSON.parse(localStorage.getItem(notesKey(lessonKey)) || '{}'); } catch(e) {}
   slideTrack.querySelectorAll('.notes-area[data-notes-slide]').forEach(el => {
     el.innerText = map[el.dataset.notesSlide] ?? '';
   });
 }
 function clearSlideNoteInStorage(lessonKey, slideIdx) {
   if (!lessonKey) return;
-  const lsKey = 'wb_notes_' + lessonKey;
+  const lsKey = notesKey(lessonKey);
   try {
     const map = JSON.parse(localStorage.getItem(lsKey) || '{}');
     delete map[slideIdx];
@@ -2408,7 +2414,7 @@ function setupEvents() {
     let startX = 0, startW = 0, dragging = false;
 
     // 저장된 너비 복원 (페이지 로드 시 1회)
-    const saved = localStorage.getItem('wb-panel-width');
+    const saved = localStorage.getItem(PANEL_WIDTH_KEY);
     if (saved) document.documentElement.style.setProperty('--panel-width', saved);
 
     handle.addEventListener('pointerdown', e => {
@@ -2433,7 +2439,7 @@ function setupEvents() {
       panel.classList.remove('resizing');
       document.body.classList.remove('panel-resizing');
       const w = getComputedStyle(document.documentElement).getPropertyValue('--panel-width').trim();
-      localStorage.setItem('wb-panel-width', w);
+      localStorage.setItem(PANEL_WIDTH_KEY, w);
     };
     handle.addEventListener('pointerup', endDrag);
     handle.addEventListener('pointercancel', endDrag);
@@ -2578,13 +2584,13 @@ function escRegex(s) {
 }
 
 // ===== DRAWINGS PERSISTENCE (localStorage only) =====
-function drawingsKey() { return 'wb_draw_' + (getCurrentLessonId() || '__default'); }
+function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
 function saveDrawingsLocal() {
   try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
 }
 function loadDrawingsLocal(lessonKey) {
   try {
-    const key = 'wb_draw_' + (lessonKey || '__default');
+    const key = DRAW_KEY_PREFIX + (lessonKey || '__default');
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : {};
   } catch(e) { return {}; }
@@ -2829,6 +2835,12 @@ function closeLessonModal() {
 }
 
 // ===== CLEAR PAGE =====
+function _clearSlideEl(slideEl, idx) {
+  slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
+  slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
+  const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${idx}"]`);
+  if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
+}
 function clearPage() {
   const idx = STATE.currentSlide;
   STATE.slideDrawings[idx] = [];
@@ -2836,12 +2848,7 @@ function clearPage() {
   redrawCanvas(idx);
   saveDrawingsLocal();
   const slideEl = slideTrack.children[idx];
-  if (slideEl) {
-    slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
-    slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
-    const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${idx}"]`);
-    if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), idx); }
-  }
+  if (slideEl) _clearSlideEl(slideEl, idx);
 }
 function clearAllPages() {
   const total = (STATE.lesson?.slides?.length) ?? 0;
@@ -2849,12 +2856,7 @@ function clearAllPages() {
     STATE.slideDrawings[i] = [];
     STATE.undoStack[i] = [];
     const slideEl = slideTrack.children[i];
-    if (slideEl) {
-      slideEl.querySelectorAll('.text-hl').forEach(el => el.classList.remove('text-hl'));
-      slideEl.querySelectorAll('.sentence-active').forEach(el => el.classList.remove('sentence-active'));
-      const ta = slideEl.querySelector(`.notes-area[data-notes-slide="${i}"]`);
-      if (ta) { ta.innerText = ''; clearSlideNoteInStorage(getCurrentLessonId(), i); }
-    }
+    if (slideEl) _clearSlideEl(slideEl, i);
   }
   saveDrawingsLocal();
   goToSlide(0);
