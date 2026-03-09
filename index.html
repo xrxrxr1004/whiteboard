@@ -334,7 +334,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 /* Blank */
 .slide-blank { justify-content: center; align-items: center; }
 .slide-blank::after {
-  content: '자유 필기 화면'; font-size: 0.8em; color: var(--text-muted); opacity: 0.4;
+  content: ''; font-size: 0.8em; color: var(--text-muted); opacity: 0.4;
   position: absolute; bottom: 60px; pointer-events: none;
 }
 
@@ -990,7 +990,7 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       <button class="tool-btn" id="btn-fullscreen" title="전체화면 (F11)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
       </button>
-      <button class="tool-btn" id="btn-add-slide" title="빈 페이지 추가">
+      <button class="tool-btn" id="btn-add-slide" title="빈 페이지 추가 (N)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       </button>
     </div>
@@ -2692,6 +2692,11 @@ function handleKey(e) {
   if (key === 'F11') { e.preventDefault(); toggleFullscreen(); return; }
   if (key === 'F5') { e.preventDefault(); toggleFullscreen(); return; }
 
+  // 빈 페이지 추가
+  if ((key === 'n' || key === 'N') && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); addBlankSlide(); return;
+  }
+
   // Lesson Manager
   if ((key === 'l' || key === 'L') && !e.ctrlKey && !e.metaKey) {
     e.preventDefault(); openLessonModal(); return;
@@ -2847,9 +2852,15 @@ function loadLessonData(data, lessonKey) {
   STATE.slideDrawings = loadDrawingsLocal(lessonKey || getCurrentLessonId());
   STATE.undoStack = {};
   STATE.twoFActive = false;
+  STATE.isDrawing = false;
+  STATE.isErasing = false;
+  // 블랙아웃 해제
+  if (STATE.blackout) { STATE.blackout = false; blackoutEl.classList.remove('active'); }
   // notes는 localStorage 기반 — 레슨 전환 시 별도 초기화 불필요
   // Close side panel if open
   if (STATE.panelOpen) { sidePanel.classList.remove('open'); STATE.panelOpen = false; }
+  // 도구 포인터로 초기화
+  setTool('navigate');
   applyBackground();
   slideContainer.style.fontSize = STATE.fontSize + 'px';
   renderAllSlides();
