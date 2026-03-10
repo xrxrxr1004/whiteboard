@@ -351,6 +351,17 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   transform: translate(-50%, -50%);
 }
 .media-wrap:hover .resize-handle { opacity: 1; }
+.media-delete-btn {
+  position: absolute; top: 0; right: 0; z-index: 10;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(220,40,40,0.85); color: #fff;
+  border: none; cursor: pointer; font-size: 14px; line-height: 1;
+  opacity: 0; transition: opacity 0.15s;
+  transform: translate(40%, -40%);
+  display: flex; align-items: center; justify-content: center;
+}
+.media-wrap:hover .media-delete-btn { opacity: 1; }
+.media-delete-btn:hover { background: rgba(180,0,0,1); }
 .resize-handle.tl { top: 0;   left: 0;   cursor: nwse-resize; }
 .resize-handle.tr { top: 0;   right: 0;  cursor: nesw-resize; transform: translate(50%,-50%); }
 .resize-handle.bl { bottom: 0; left: 0;  cursor: nesw-resize; transform: translate(-50%,50%); }
@@ -2928,6 +2939,7 @@ function createOverlayWrap(ov) {
       <img class="slide-image" src="${esc(ov.src||'')}" alt="${esc(ov.caption||'')}"
         style="object-fit:${ov.fit||'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
       ${ov.caption ? `<div class="image-caption">${esc(ov.caption)}</div>` : ''}
+      <button class="media-delete-btn" title="삭제">✕</button>
       <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>`;
   } else if (ov.type === 'video') {
     wrap.innerHTML = `
@@ -2937,6 +2949,7 @@ function createOverlayWrap(ov) {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
         </iframe>
       </div>
+      <button class="media-delete-btn" title="삭제">✕</button>
       <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>`;
   }
   return wrap;
@@ -2971,14 +2984,29 @@ function addMediaSlide(slideData) {
 function attachMediaHandles(slideEl, wrapEl, data) {
   const wrap    = wrapEl;
   const handles = Array.from(wrapEl.querySelectorAll('.resize-handle'));
+  const deleteBtn = wrapEl.querySelector('.media-delete-btn');
   // 영상은 iframe이 마우스 이벤트를 흡수하므로 drag-bar를 사용
   const dragBar = wrapEl.querySelector('.video-drag-bar');
   const dragEl  = dragBar || wrap;
   if (!wrap) return;
 
+  // ── 삭제 ──
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      const slide = STATE.lesson?.slides?.[STATE.currentSlide];
+      if (slide?.overlays) {
+        slide.overlays = slide.overlays.filter(o => o !== data);
+      }
+      wrap.remove();
+      persistCurrentLesson();
+    });
+  }
+
   // ── 이동 ──
   dragEl.addEventListener('mousedown', e => {
     if (handles.some(h => e.target === h || h.contains(e.target))) return;
+    if (deleteBtn && (e.target === deleteBtn || deleteBtn.contains(e.target))) return;
     e.preventDefault(); e.stopPropagation();
     const sw = slideEl.offsetWidth, sh = slideEl.offsetHeight;
     const ox = e.clientX - parseFloat(wrap.style.left) / 100 * sw;
