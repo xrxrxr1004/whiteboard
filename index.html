@@ -2030,7 +2030,6 @@ function addBlankSlide() {
   STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, { type: 'blank' });
   renderAllSlides();
   goToSlide(STATE.currentSlide + 1);
-  persistCurrentLesson();
 }
 
 // ===== 2-F TOGGLE =====
