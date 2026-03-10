@@ -331,6 +331,36 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .slide-image { max-width: 100%; max-height: calc(100% - 80px); object-fit: contain; border-radius: 8px; margin: 0 auto; display: block; }
 .image-caption { text-align: center; font-size: 0.8em; color: var(--slide-text-secondary); margin-top: 12px; }
 
+/* ── Media slide (image / video) — free-position layout ── */
+.media-slide { position: relative; overflow: hidden; padding: 0; }
+.media-wrap {
+  position: absolute;
+  cursor: grab;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+  user-select: none; -webkit-user-select: none;
+}
+.media-wrap:active { cursor: grabbing; }
+.media-wrap .slide-image { width: 100%; display: block; border-radius: 0; max-height: none; }
+.media-wrap .image-caption { text-align:center; font-size:0.8em; padding:5px 8px; background:rgba(0,0,0,0.45); color:#fff; margin-top:0; }
+.resize-handle {
+  position: absolute; bottom: 0; right: 0;
+  width: 22px; height: 22px;
+  cursor: nwse-resize; z-index: 5;
+  background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,0.8) 45%);
+  border-radius: 0 0 8px 0;
+  opacity: 0.6; transition: opacity 0.15s;
+}
+.media-wrap:hover .resize-handle { opacity: 1; }
+.video-drag-bar {
+  background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.85);
+  font-size: 11px; text-align: center; padding: 5px 8px;
+  cursor: grab; user-select: none; -webkit-user-select: none;
+  letter-spacing: 0.5px;
+}
+.video-drag-bar:active { cursor: grabbing; }
+
 /* Blank */
 .slide-blank { justify-content: center; align-items: center; }
 .slide-blank::after {
@@ -679,6 +709,68 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .theme-dark .lm-list li:hover { background: #141420; }
 .theme-dark .lm-list-btn:hover { background: #1a1a2e; color: #e0e0e0; }
 
+/* ===== MEDIA MODAL ===== */
+#media-modal {
+  position: fixed; inset: 0; z-index: 300; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+}
+#media-modal.open { display: flex; }
+.mm-dialog {
+  background: var(--surface, #fff); color: var(--slide-text, #0f172a);
+  border-radius: 16px; width: 520px; max-width: 94vw;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.mm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border, #e2e8f0);
+  font-weight: 700; font-size: 15px;
+}
+.mm-close {
+  background: none; border: none; cursor: pointer; font-size: 20px;
+  color: var(--text-secondary, #64748b); line-height: 1; padding: 2px 6px; border-radius: 6px;
+}
+.mm-close:hover { background: var(--border, #e2e8f0); }
+.mm-tabs { display: flex; gap: 6px; padding: 12px 16px 0; }
+.mm-tab {
+  flex: 1; padding: 8px 4px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: var(--bg, #f8fafc); color: var(--text-secondary, #64748b);
+}
+.mm-tab.active { background: var(--purple, #7c3aed); color: #fff; }
+.mm-tab:hover:not(.active) { background: var(--border, #e2e8f0); }
+.mm-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.mm-section { display: flex; flex-direction: column; gap: 10px; }
+.mm-section.hidden { display: none; }
+.mm-input {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px; font-size: 14px; background: var(--bg, #f8fafc);
+  color: var(--slide-text, #0f172a); box-sizing: border-box;
+}
+.mm-input:focus { outline: none; border-color: var(--purple, #7c3aed); }
+.mm-select {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px; font-size: 14px; background: var(--bg, #f8fafc);
+  color: var(--slide-text, #0f172a); box-sizing: border-box; cursor: pointer;
+}
+.mm-btn {
+  padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  background: var(--purple, #7c3aed); color: #fff;
+}
+.mm-btn:hover { opacity: .9; }
+.mm-btn:disabled { opacity: .45; cursor: not-allowed; }
+.mm-status { font-size: 13px; color: var(--text-secondary, #64748b); min-height: 18px; }
+.mm-hint { font-size: 12px; color: var(--text-muted, #94a3b8); }
+.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; }
+.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+.theme-dark .mm-dialog { background: #0e0e18; }
+.theme-dark .mm-tab { background: #141420; color: #9e9eb8; }
+.theme-dark .mm-tab:hover:not(.active) { background: #1a1a2e; }
+.theme-dark .mm-input, .theme-dark .mm-select { background: #0a0a12; border-color: #2a2a40; color: #d0d0e0; }
+.theme-dark .mm-input:focus { border-color: #a78bfa; }
+
 /* ===== MISC ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @media (max-width: 800px) {
@@ -993,6 +1085,9 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       <button class="tool-btn" id="btn-add-slide" title="빈 페이지 추가 (N)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       </button>
+      <button class="tool-btn" id="btn-add-media" title="미디어 추가 (M)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </button>
     </div>
     <!-- SPACER: 오른쪽 도구 그룹을 끝으로 밀기 -->
     <div class="tb-spacer"></div>
@@ -1194,6 +1289,38 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
+
+  <!-- MEDIA MODAL -->
+  <div id="media-modal">
+    <div class="mm-dialog">
+      <div class="mm-header">
+        <span>📷 미디어 추가</span>
+        <button class="mm-close" id="mm-close">×</button>
+      </div>
+      <div class="mm-tabs">
+        <button class="mm-tab active" data-mtab="url">이미지 URL</button>
+        <button class="mm-tab" data-mtab="video">YouTube / 영상</button>
+      </div>
+      <div class="mm-body">
+        <!-- 이미지 URL 탭 -->
+        <div class="mm-section" id="ms-url">
+          <input class="mm-input" id="m-img-url" type="url" placeholder="https://...  (이미지 URL)">
+          <input class="mm-input" id="m-img-caption" type="text" placeholder="캡션 (선택)">
+          <select class="mm-select" id="m-img-fit">
+            <option value="contain">contain — 전체 표시</option>
+            <option value="cover">cover — 꽉 채우기</option>
+          </select>
+          <button class="mm-btn" id="m-btn-url">슬라이드에 추가</button>
+        </div>
+        <!-- YouTube / 영상 탭 -->
+        <div class="mm-section hidden" id="ms-video">
+          <input class="mm-input" id="m-video-url" type="url" placeholder="https://youtube.com/watch?v=...">
+          <div class="mm-hint">YouTube, Vimeo, 또는 직접 embed URL 지원</div>
+          <button class="mm-btn" id="m-btn-video">슬라이드에 추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- VARIANT QUESTION: Type Selection Modal (multi-select) -->
   <div id="vq-modal" class="vq-backdrop hidden">
@@ -1765,10 +1892,36 @@ const RENDERERS = {
   },
 
   image(el, data) {
-    el.innerHTML = `<div class="slide-header">${esc(data.title || '')}</div>
-      <img class="slide-image" src="${esc(data.src || '')}" alt="${esc(data.caption || '')}"
-        style="object-fit:${data.fit || 'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
-      ${data.caption ? `<div class="image-caption">${esc(data.caption)}</div>` : ''}`;
+    const w = data.width ?? 60;
+    const x = data.x ?? (100 - w) / 2;
+    const y = data.y ?? 10;
+    el.classList.add('media-slide');
+    el.innerHTML = `
+      <div class="media-wrap" style="left:${x}%;top:${y}%;width:${w}%">
+        <img class="slide-image" src="${esc(data.src || '')}" alt="${esc(data.caption || '')}"
+          style="object-fit:${data.fit || 'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
+        ${data.caption ? `<div class="image-caption">${esc(data.caption)}</div>` : ''}
+        <div class="resize-handle"></div>
+      </div>`;
+    attachMediaHandles(el, data);
+  },
+
+  video(el, data) {
+    const w = data.width ?? 60;
+    const x = data.x ?? (100 - w) / 2;
+    const y = data.y ?? 10;
+    el.classList.add('media-slide');
+    el.innerHTML = `
+      <div class="media-wrap" style="left:${x}%;top:${y}%;width:${w}%">
+        <div class="video-drag-bar">⠿ 드래그하여 이동</div>
+        <div class="video-wrapper">
+          <iframe src="${esc(data.src || '')}" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+          </iframe>
+        </div>
+        <div class="resize-handle"></div>
+      </div>`;
+    attachMediaHandles(el, data);
   },
 
   blank(el) {
@@ -2146,7 +2299,7 @@ function onPointerUp(e) {
   STATE.slideDrawings[idx].push(STATE.currentStroke);
   STATE.undoStack[idx] = [];
   STATE.currentStroke = null;
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 function drawSegment(from, to, stroke) {
@@ -2354,7 +2507,7 @@ function clearDrawing() {
     STATE.undoStack[idx] = strokes.slice();
     STATE.slideDrawings[idx] = [];
     redrawCanvas(idx);
-    saveDrawingsLocal();
+    saveDrawings();
   }
 }
 
@@ -2366,7 +2519,7 @@ function undo() {
   if (!STATE.undoStack[idx]) STATE.undoStack[idx] = [];
   STATE.undoStack[idx].push(removed);
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 function redo() {
@@ -2377,7 +2530,7 @@ function redo() {
   if (!STATE.slideDrawings[idx]) STATE.slideDrawings[idx] = [];
   STATE.slideDrawings[idx].push(restored);
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 // ===== TOOL MANAGEMENT =====
@@ -2526,6 +2679,7 @@ function setupEvents() {
   $('#btn-panel').addEventListener('click', togglePanel);
   $('#btn-fullscreen').addEventListener('click', toggleFullscreen);
   $('#btn-add-slide').addEventListener('click', addBlankSlide);
+  $('#btn-add-media').addEventListener('click', openMediaModal);
   $('#panel-close-btn').addEventListener('click', togglePanel);
   $$('.panel-tab').forEach(btn => btn.addEventListener('click', () => {
     STATE.panelTab = btn.dataset.tab;
@@ -2682,6 +2836,7 @@ function handleKey(e) {
   if (key === 'Escape') {
     if (STATE.paletteLevel > 0) { collapsePalette(); return; }
     if ($('#cp-modal').classList.contains('open')) { closeClearPageModal(); return; }
+    if ($('#media-modal').classList.contains('open')) { closeMediaModal(); return; }
     if ($('#lesson-modal').classList.contains('open')) { closeLessonModal(); return; }
     if (STATE.panelOpen) { togglePanel(); return; }
     if (STATE.drawingMode !== 'navigate') { setTool('navigate'); return; }
@@ -2695,6 +2850,11 @@ function handleKey(e) {
   // 빈 페이지 추가
   if ((key === 'n' || key === 'N') && !e.ctrlKey && !e.metaKey) {
     e.preventDefault(); addBlankSlide(); return;
+  }
+
+  // 미디어 추가
+  if ((key === 'm' || key === 'M') && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); openMediaModal(); return;
   }
 
   // Lesson Manager
@@ -2729,9 +2889,106 @@ function escRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// ===== DRAWINGS PERSISTENCE (localStorage only) =====
+// ===== MEDIA MODAL =====
+function openMediaModal() {
+  if (!STATE.lesson) { lmToast('⚠️ 수업을 먼저 로드하세요'); return; }
+  $('#media-modal').classList.add('open');
+}
+function closeMediaModal() {
+  $('#media-modal').classList.remove('open');
+  $('#m-img-url').value = '';
+  $('#m-img-caption').value = '';
+  $('#m-video-url').value = '';
+}
+
+// STATE.lesson 변경사항을 localStorage + Supabase에 올바르게 반영
+function persistCurrentLesson() {
+  const id = getCurrentLessonId();
+  if (!id || !STATE.lesson) return;
+  const store = getLessonStore();
+  if (!store[id]) store[id] = {};
+  store[id].data    = STATE.lesson;
+  store[id].savedAt = Date.now();
+  saveLessonStore(store);
+}
+
+function addMediaSlide(slideData) {
+  if (!STATE.lesson?.slides) return;
+  STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, slideData);
+  renderAllSlides();
+  goToSlide(STATE.currentSlide + 1);
+  persistCurrentLesson();
+  closeMediaModal();
+}
+
+function attachMediaHandles(slideEl, data) {
+  const wrap    = slideEl.querySelector('.media-wrap');
+  const handle  = slideEl.querySelector('.resize-handle');
+  // 영상은 iframe이 마우스 이벤트를 흡수하므로 drag-bar를 사용
+  const dragBar = slideEl.querySelector('.video-drag-bar');
+  const dragEl  = dragBar || wrap;   // 이미지는 wrap 전체, 영상은 drag-bar
+  if (!wrap) return;
+
+  // ── 이동 ──
+  dragEl.addEventListener('mousedown', e => {
+    if (handle && (e.target === handle || handle.contains(e.target))) return;
+    e.preventDefault(); e.stopPropagation();
+    const sw = slideEl.offsetWidth, sh = slideEl.offsetHeight;
+    const ox = e.clientX - parseFloat(wrap.style.left) / 100 * sw;
+    const oy = e.clientY - parseFloat(wrap.style.top)  / 100 * sh;
+    const onMove = mv => {
+      const nx = Math.max(0, Math.min(100 - parseFloat(wrap.style.width), (mv.clientX - ox) / sw * 100));
+      const ny = Math.max(0, Math.min(85, (mv.clientY - oy) / sh * 100));
+      wrap.style.left = nx + '%';
+      wrap.style.top  = ny + '%';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      data.x = parseFloat(wrap.style.left);
+      data.y = parseFloat(wrap.style.top);
+      persistCurrentLesson();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // ── 리사이즈 (우하단 핸들) ──
+  if (!handle) return;
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation();
+    const sw = slideEl.offsetWidth;
+    const startX = e.clientX, startW = wrap.offsetWidth;
+    const onMove = mv => {
+      const maxW = 100 - parseFloat(wrap.style.left || 0);
+      const nw = Math.round(Math.max(15, Math.min(maxW, (startW + mv.clientX - startX) / sw * 100)));
+      wrap.style.width = nw + '%';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      data.width = parseFloat(wrap.style.width);
+      persistCurrentLesson();
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+function toEmbedUrl(url) {
+  // YouTube watch → embed
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  // Vimeo
+  const vi = url.match(/vimeo\.com\/(\d+)/);
+  if (vi) return `https://player.vimeo.com/video/${vi[1]}`;
+  return url; // already embed or other platform
+}
+
+
+// ===== DRAWINGS PERSISTENCE (localStorage only — 기기별 독립) =====
 function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
-function saveDrawingsLocal() {
+function saveDrawings() {
   try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
 }
 function loadDrawingsLocal(lessonKey) {
@@ -2762,21 +3019,20 @@ async function syncFromSupabase() {
   const store = getLessonStore();
   let changed = false;
   data.forEach(row => {
-    if (row.lesson_key.startsWith('lib_')) return;
     const local = store[row.lesson_key];
     if (!local || row.saved_at > (local.savedAt ?? 0)) {
       store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
       changed = true;
     }
   });
-  if (changed) { saveLessonStoreLocal(store); renderLessonList?.(); }
+  if (changed) { saveLessonStoreLocal(store); renderSavedList?.(); }
 }
 
-// 로컬 → DB 동기화 (upsert, lib_ 제외)
+// 로컬 → DB 동기화 (upsert)
 async function pushLessonsToSB(store) {
   if (!sb) return;
   const rows = Object.entries(store)
-    .filter(([key, entry]) => !key.startsWith('lib_') && entry.data)
+    .filter(([key, entry]) => entry.data)
     .map(([lesson_key, entry]) => ({
       lesson_key,
       title: entry.data?.title ?? lesson_key,
@@ -2786,13 +3042,18 @@ async function pushLessonsToSB(store) {
       updated_at: new Date().toISOString()
     }));
   if (!rows.length) return;
-  try { await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' }); }
-  catch(e) { console.warn('SB push failed', e); }
+  try {
+    const { error } = await sb.from('lessons').upsert(rows, { onConflict: 'lesson_key' });
+    if (error) throw error;
+  } catch(e) {
+    console.error('SB push failed', e);
+    lmToast?.('⚠️ DB 저장 실패 — 로컬에만 저장됨');
+  }
 }
 
 // 소프트 삭제
 async function deleteFromSB(key) {
-  if (!sb || key.startsWith('lib_')) return;
+  if (!sb) return;
   try {
     await sb.from('lessons')
       .update({ deleted_at: new Date().toISOString() })
@@ -2998,7 +3259,7 @@ function clearPage() {
   STATE.slideDrawings[idx] = [];
   STATE.undoStack[idx] = [];
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
   const slideEl = slideTrack.children[idx];
   if (slideEl) _clearSlideEl(slideEl, idx);
 }
@@ -3010,7 +3271,7 @@ function clearAllPages() {
     const slideEl = slideTrack.children[i];
     if (slideEl) _clearSlideEl(slideEl, i);
   }
-  saveDrawingsLocal();
+  saveDrawings();
   goToSlide(0);
 }
 function openClearPageModal() { $('#cp-modal').classList.add('open'); }
@@ -3144,6 +3405,38 @@ function renderSavedList() {
 
   // 렌더 시 bulk bar 초기화
   $('#lm-bulk-bar').classList.add('hidden');
+}
+
+function setupMediaModal() {
+  $('#mm-close').addEventListener('click', closeMediaModal);
+  $('#media-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeMediaModal(); });
+
+  // 탭 전환
+  $$('.mm-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      $$('.mm-tab').forEach(x => x.classList.remove('active'));
+      $$('.mm-section').forEach(x => x.classList.add('hidden'));
+      t.classList.add('active');
+      $('#ms-' + t.dataset.mtab).classList.remove('hidden');
+    });
+  });
+
+  // ── 이미지 URL 탭 ──
+  $('#m-btn-url').addEventListener('click', () => {
+    const src = $('#m-img-url').value.trim();
+    if (!src) { lmToast('⚠️ URL을 입력하세요'); return; }
+    const caption = $('#m-img-caption').value.trim();
+    const fit = $('#m-img-fit').value;
+    addMediaSlide({ type: 'image', title: caption || '', src, caption, fit });
+  });
+
+  // ── YouTube / 영상 탭 ──
+  $('#m-btn-video').addEventListener('click', () => {
+    const raw = $('#m-video-url').value.trim();
+    if (!raw) { lmToast('⚠️ URL을 입력하세요'); return; }
+    const embedUrl = toEmbedUrl(raw);
+    addMediaSlide({ type: 'video', title: '', src: embedUrl, width: 60 });
+  });
 }
 
 function setupLessonManager() {
@@ -3817,6 +4110,7 @@ slideTrack.addEventListener('click', e => {
 
 init();
 setupLessonManager();
+setupMediaModal();
 // Clear page
 $('#btn-clear-page').addEventListener('click', openClearPageModal);
 $('#cp-cancel').addEventListener('click', closeClearPageModal);
