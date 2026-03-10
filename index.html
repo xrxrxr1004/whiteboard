@@ -353,6 +353,13 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   opacity: 0.6; transition: opacity 0.15s;
 }
 .media-wrap:hover .resize-handle { opacity: 1; }
+.video-drag-bar {
+  background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.85);
+  font-size: 11px; text-align: center; padding: 5px 8px;
+  cursor: grab; user-select: none; -webkit-user-select: none;
+  letter-spacing: 0.5px;
+}
+.video-drag-bar:active { cursor: grabbing; }
 
 /* Blank */
 .slide-blank { justify-content: center; align-items: center; }
@@ -1934,6 +1941,7 @@ const RENDERERS = {
     el.classList.add('media-slide');
     el.innerHTML = `
       <div class="media-wrap" style="left:${x}%;top:${y}%;width:${w}%">
+        <div class="video-drag-bar">⠿ 드래그하여 이동</div>
         <div class="video-wrapper">
           <iframe src="${esc(data.src || '')}" allowfullscreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
@@ -2926,22 +2934,36 @@ function closeMediaModal() {
   $('#mm-upload-status').textContent = '';
 }
 
+// STATE.lesson 변경사항을 localStorage + Supabase에 올바르게 반영
+function persistCurrentLesson() {
+  const id = getCurrentLessonId();
+  if (!id || !STATE.lesson) return;
+  const store = getLessonStore();
+  if (!store[id]) store[id] = {};
+  store[id].data    = STATE.lesson;
+  store[id].savedAt = Date.now();
+  saveLessonStore(store);
+}
+
 function addMediaSlide(slideData) {
   if (!STATE.lesson?.slides) return;
   STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, slideData);
   renderAllSlides();
   goToSlide(STATE.currentSlide + 1);
-  saveLessonStore(getLessonStore()); // persist
+  persistCurrentLesson();
   closeMediaModal();
 }
 
 function attachMediaHandles(slideEl, data) {
-  const wrap   = slideEl.querySelector('.media-wrap');
-  const handle = slideEl.querySelector('.resize-handle');
+  const wrap    = slideEl.querySelector('.media-wrap');
+  const handle  = slideEl.querySelector('.resize-handle');
+  // 영상은 iframe이 마우스 이벤트를 흡수하므로 drag-bar를 사용
+  const dragBar = slideEl.querySelector('.video-drag-bar');
+  const dragEl  = dragBar || wrap;   // 이미지는 wrap 전체, 영상은 drag-bar
   if (!wrap) return;
 
-  // ── 이동 (wrap 본체 드래그) ──
-  wrap.addEventListener('mousedown', e => {
+  // ── 이동 ──
+  dragEl.addEventListener('mousedown', e => {
     if (handle && (e.target === handle || handle.contains(e.target))) return;
     e.preventDefault(); e.stopPropagation();
     const sw = slideEl.offsetWidth, sh = slideEl.offsetHeight;
@@ -2958,13 +2980,13 @@ function attachMediaHandles(slideEl, data) {
       document.removeEventListener('mouseup', onUp);
       data.x = parseFloat(wrap.style.left);
       data.y = parseFloat(wrap.style.top);
-      saveLessonStore(getLessonStore());
+      persistCurrentLesson();
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
 
-  // ── 리사이즈 (우하단 핸들 드래그) ──
+  // ── 리사이즈 (우하단 핸들) ──
   if (!handle) return;
   handle.addEventListener('mousedown', e => {
     e.preventDefault(); e.stopPropagation();
@@ -2979,7 +3001,7 @@ function attachMediaHandles(slideEl, data) {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       data.width = parseFloat(wrap.style.width);
-      saveLessonStore(getLessonStore());
+      persistCurrentLesson();
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
