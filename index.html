@@ -345,14 +345,16 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .media-wrap .slide-image { width: 100%; display: block; border-radius: 0; max-height: none; }
 .media-wrap .image-caption { text-align:center; font-size:0.8em; padding:5px 8px; background:rgba(0,0,0,0.45); color:#fff; margin-top:0; }
 .resize-handle {
-  position: absolute; bottom: 0; right: 0;
-  width: 22px; height: 22px;
-  cursor: nwse-resize; z-index: 5;
-  background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,0.8) 45%);
-  border-radius: 0 0 8px 0;
-  opacity: 0.6; transition: opacity 0.15s;
+  position: absolute; width: 12px; height: 12px; z-index: 5;
+  background: #fff; border: 2px solid rgba(100,100,255,0.6);
+  border-radius: 50%; opacity: 0; transition: opacity 0.15s;
+  transform: translate(-50%, -50%);
 }
 .media-wrap:hover .resize-handle { opacity: 1; }
+.resize-handle.tl { top: 0;   left: 0;   cursor: nwse-resize; }
+.resize-handle.tr { top: 0;   right: 0;  cursor: nesw-resize; transform: translate(50%,-50%); }
+.resize-handle.bl { bottom: 0; left: 0;  cursor: nesw-resize; transform: translate(-50%,50%); }
+.resize-handle.br { bottom: 0; right: 0; cursor: nwse-resize; transform: translate(50%,50%); }
 .video-drag-bar {
   background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.85);
   font-size: 11px; text-align: center; padding: 5px 8px;
@@ -1902,7 +1904,7 @@ const RENDERERS = {
         <img class="slide-image" src="${esc(data.src || '')}" alt="${esc(data.caption || '')}"
           style="object-fit:${data.fit || 'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
         ${data.caption ? `<div class="image-caption">${esc(data.caption)}</div>` : ''}
-        <div class="resize-handle"></div>
+        <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>
       </div>`;
     attachMediaHandles(el, el.querySelector('.media-wrap'), data);
   },
@@ -1920,7 +1922,7 @@ const RENDERERS = {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
           </iframe>
         </div>
-        <div class="resize-handle"></div>
+        <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>
       </div>`;
     attachMediaHandles(el, el.querySelector('.media-wrap'), data);
   },
@@ -2925,7 +2927,7 @@ function createOverlayWrap(ov) {
       <img class="slide-image" src="${esc(ov.src||'')}" alt="${esc(ov.caption||'')}"
         style="object-fit:${ov.fit||'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
       ${ov.caption ? `<div class="image-caption">${esc(ov.caption)}</div>` : ''}
-      <div class="resize-handle"></div>`;
+      <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>`;
   } else if (ov.type === 'video') {
     wrap.innerHTML = `
       <div class="video-drag-bar">⠿ 드래그하여 이동</div>
@@ -2934,7 +2936,7 @@ function createOverlayWrap(ov) {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
         </iframe>
       </div>
-      <div class="resize-handle"></div>`;
+      <div class="resize-handle tl"></div><div class="resize-handle tr"></div><div class="resize-handle bl"></div><div class="resize-handle br"></div>`;
   }
   return wrap;
 }
@@ -2967,15 +2969,15 @@ function addMediaSlide(slideData) {
 
 function attachMediaHandles(slideEl, wrapEl, data) {
   const wrap    = wrapEl;
-  const handle  = wrapEl.querySelector('.resize-handle');
+  const handles = Array.from(wrapEl.querySelectorAll('.resize-handle'));
   // 영상은 iframe이 마우스 이벤트를 흡수하므로 drag-bar를 사용
   const dragBar = wrapEl.querySelector('.video-drag-bar');
-  const dragEl  = dragBar || wrap;   // 이미지는 wrap 전체, 영상은 drag-bar
+  const dragEl  = dragBar || wrap;
   if (!wrap) return;
 
   // ── 이동 ──
   dragEl.addEventListener('mousedown', e => {
-    if (handle && (e.target === handle || handle.contains(e.target))) return;
+    if (handles.some(h => e.target === h || h.contains(e.target))) return;
     e.preventDefault(); e.stopPropagation();
     const sw = slideEl.offsetWidth, sh = slideEl.offsetHeight;
     const ox = e.clientX - parseFloat(wrap.style.left) / 100 * sw;
@@ -2997,25 +2999,41 @@ function attachMediaHandles(slideEl, wrapEl, data) {
     document.addEventListener('mouseup', onUp);
   });
 
-  // ── 리사이즈 (우하단 핸들) ──
-  if (!handle) return;
-  handle.addEventListener('mousedown', e => {
-    e.preventDefault(); e.stopPropagation();
-    const sw = slideEl.offsetWidth;
-    const startX = e.clientX, startW = wrap.offsetWidth;
-    const onMove = mv => {
-      const maxW = 100 - parseFloat(wrap.style.left || 0);
-      const nw = Math.round(Math.max(15, Math.min(maxW, (startW + mv.clientX - startX) / sw * 100)));
-      wrap.style.width = nw + '%';
-    };
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      data.width = parseFloat(wrap.style.width);
-      persistCurrentLesson();
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+  // ── 리사이즈 (4모서리) ──
+  handles.forEach(handle => {
+    const isLeft = handle.classList.contains('tl') || handle.classList.contains('bl');
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      const sw = slideEl.offsetWidth;
+      const startX    = e.clientX;
+      const startW    = wrap.offsetWidth;
+      const startWPct = startW / sw * 100;
+      const startLeft = parseFloat(wrap.style.left) || 0;
+      const onMove = mv => {
+        const dx = mv.clientX - startX;
+        if (isLeft) {
+          // 오른쪽 끝 고정, 왼쪽 끝을 이동
+          const rightEdge = startLeft + startWPct;
+          const newLeft = Math.max(0, Math.min(rightEdge - 15, startLeft + dx / sw * 100));
+          wrap.style.left  = newLeft + '%';
+          wrap.style.width = (rightEdge - newLeft) + '%';
+        } else {
+          // 왼쪽 끝 고정, 오른쪽 끝을 이동
+          const maxW = 100 - startLeft;
+          const nw = Math.max(15, Math.min(maxW, startWPct + dx / sw * 100));
+          wrap.style.width = nw + '%';
+        }
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        data.x     = parseFloat(wrap.style.left);
+        data.width = parseFloat(wrap.style.width);
+        persistCurrentLesson();
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
   });
 }
 
@@ -3062,14 +3080,23 @@ async function syncFromSupabase() {
   if (error || !data) return;
   const store = getLessonStore();
   let changed = false;
+  let currentUpdated = false;
+  const currentId = getCurrentLessonId();
   data.forEach(row => {
     const local = store[row.lesson_key];
     if (!local || row.saved_at > (local.savedAt ?? 0)) {
       store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
       changed = true;
+      if (row.lesson_key === currentId) currentUpdated = true;
     }
   });
   if (changed) { saveLessonStoreLocal(store); renderSavedList?.(); }
+  // 현재 열려있는 레슨이 업데이트됐으면 슬라이드 재렌더링
+  if (currentUpdated && STATE.lesson) {
+    const savedIdx = STATE.currentSlide;
+    loadLessonData(store[currentId].data, currentId);
+    goToSlide(savedIdx);
+  }
 }
 
 // 로컬 → DB 동기화 (upsert)
