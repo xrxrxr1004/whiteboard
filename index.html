@@ -679,6 +679,82 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .theme-dark .lm-list li:hover { background: #141420; }
 .theme-dark .lm-list-btn:hover { background: #1a1a2e; color: #e0e0e0; }
 
+/* ===== MEDIA MODAL ===== */
+#media-modal {
+  position: fixed; inset: 0; z-index: 300; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+}
+#media-modal.open { display: flex; }
+.mm-dialog {
+  background: var(--surface, #fff); color: var(--slide-text, #0f172a);
+  border-radius: 16px; width: 520px; max-width: 94vw;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.mm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border, #e2e8f0);
+  font-weight: 700; font-size: 15px;
+}
+.mm-close {
+  background: none; border: none; cursor: pointer; font-size: 20px;
+  color: var(--text-secondary, #64748b); line-height: 1; padding: 2px 6px; border-radius: 6px;
+}
+.mm-close:hover { background: var(--border, #e2e8f0); }
+.mm-tabs { display: flex; gap: 6px; padding: 12px 16px 0; }
+.mm-tab {
+  flex: 1; padding: 8px 4px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: var(--bg, #f8fafc); color: var(--text-secondary, #64748b);
+}
+.mm-tab.active { background: var(--purple, #7c3aed); color: #fff; }
+.mm-tab:hover:not(.active) { background: var(--border, #e2e8f0); }
+.mm-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.mm-section { display: flex; flex-direction: column; gap: 10px; }
+.mm-section.hidden { display: none; }
+.mm-input {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px; font-size: 14px; background: var(--bg, #f8fafc);
+  color: var(--slide-text, #0f172a); box-sizing: border-box;
+}
+.mm-input:focus { outline: none; border-color: var(--purple, #7c3aed); }
+.mm-select {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px; font-size: 14px; background: var(--bg, #f8fafc);
+  color: var(--slide-text, #0f172a); box-sizing: border-box; cursor: pointer;
+}
+.mm-dropzone {
+  border: 2px dashed var(--border, #e2e8f0); border-radius: 10px;
+  padding: 28px 16px; text-align: center; cursor: pointer; font-size: 14px;
+  color: var(--text-secondary, #64748b); background: var(--bg, #f8fafc);
+  transition: border-color .15s, background .15s;
+}
+.mm-dropzone:hover, .mm-dropzone.drag-over {
+  border-color: var(--purple, #7c3aed); background: rgba(124,58,237,0.04);
+}
+.mm-preview { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.mm-preview img { max-height: 100px; max-width: 140px; border-radius: 6px; object-fit: contain; }
+.mm-preview-name { font-size: 13px; color: var(--text-secondary, #64748b); word-break: break-all; }
+.mm-btn {
+  padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  background: var(--purple, #7c3aed); color: #fff;
+}
+.mm-btn:hover { opacity: .9; }
+.mm-btn:disabled { opacity: .45; cursor: not-allowed; }
+.mm-status { font-size: 13px; color: var(--text-secondary, #64748b); min-height: 18px; }
+.mm-hint { font-size: 12px; color: var(--text-muted, #94a3b8); }
+.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; }
+.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+.theme-dark .mm-dialog { background: #0e0e18; }
+.theme-dark .mm-tab { background: #141420; color: #9e9eb8; }
+.theme-dark .mm-tab:hover:not(.active) { background: #1a1a2e; }
+.theme-dark .mm-input, .theme-dark .mm-select { background: #0a0a12; border-color: #2a2a40; color: #d0d0e0; }
+.theme-dark .mm-input:focus { border-color: #a78bfa; }
+.theme-dark .mm-dropzone { background: #0a0a12; border-color: #2a2a40; }
+.theme-dark .mm-dropzone:hover, .theme-dark .mm-dropzone.drag-over { border-color: #a78bfa; }
+
 /* ===== MISC ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @media (max-width: 800px) {
@@ -1194,6 +1270,52 @@ window.LESSON_LIBRARY.push({
     </div>
   </div>
   <div class="lm-toast" id="lm-toast"></div>
+
+  <!-- MEDIA MODAL -->
+  <div id="media-modal">
+    <div class="mm-dialog">
+      <div class="mm-header">
+        <span>📷 미디어 추가</span>
+        <button class="mm-close" id="mm-close">×</button>
+      </div>
+      <div class="mm-tabs">
+        <button class="mm-tab active" data-mtab="url">이미지 URL</button>
+        <button class="mm-tab" data-mtab="upload">파일 업로드</button>
+        <button class="mm-tab" data-mtab="video">YouTube / 영상</button>
+      </div>
+      <div class="mm-body">
+        <!-- 이미지 URL 탭 -->
+        <div class="mm-section" id="ms-url">
+          <input class="mm-input" id="m-img-url" type="url" placeholder="https://...  (이미지 URL)">
+          <input class="mm-input" id="m-img-caption" type="text" placeholder="캡션 (선택)">
+          <select class="mm-select" id="m-img-fit">
+            <option value="contain">contain — 전체 표시</option>
+            <option value="cover">cover — 꽉 채우기</option>
+          </select>
+          <button class="mm-btn" id="m-btn-url">슬라이드에 추가</button>
+        </div>
+        <!-- 파일 업로드 탭 -->
+        <div class="mm-section hidden" id="ms-upload">
+          <div class="mm-dropzone" id="mm-dropzone">
+            파일을 드래그하거나 클릭해서 선택<br><small>JPG · PNG · GIF · WebP · SVG</small>
+          </div>
+          <input type="file" id="m-file-input" accept="image/*" style="display:none">
+          <div class="mm-preview hidden" id="mm-preview">
+            <img id="mm-preview-img" alt="preview">
+            <span class="mm-preview-name" id="mm-preview-name"></span>
+          </div>
+          <button class="mm-btn" id="m-btn-upload" disabled>업로드 & 슬라이드 추가</button>
+          <div class="mm-status" id="mm-upload-status"></div>
+        </div>
+        <!-- YouTube / 영상 탭 -->
+        <div class="mm-section hidden" id="ms-video">
+          <input class="mm-input" id="m-video-url" type="url" placeholder="https://youtube.com/watch?v=...">
+          <div class="mm-hint">YouTube, Vimeo, 또는 직접 embed URL 지원</div>
+          <button class="mm-btn" id="m-btn-video">슬라이드에 추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- VARIANT QUESTION: Type Selection Modal (multi-select) -->
   <div id="vq-modal" class="vq-backdrop hidden">
@@ -2682,6 +2804,7 @@ function handleKey(e) {
   if (key === 'Escape') {
     if (STATE.paletteLevel > 0) { collapsePalette(); return; }
     if ($('#cp-modal').classList.contains('open')) { closeClearPageModal(); return; }
+    if ($('#media-modal').classList.contains('open')) { closeMediaModal(); return; }
     if ($('#lesson-modal').classList.contains('open')) { closeLessonModal(); return; }
     if (STATE.panelOpen) { togglePanel(); return; }
     if (STATE.drawingMode !== 'navigate') { setTool('navigate'); return; }
@@ -2695,6 +2818,11 @@ function handleKey(e) {
   // 빈 페이지 추가
   if ((key === 'n' || key === 'N') && !e.ctrlKey && !e.metaKey) {
     e.preventDefault(); addBlankSlide(); return;
+  }
+
+  // 미디어 추가
+  if ((key === 'm' || key === 'M') && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); openMediaModal(); return;
   }
 
   // Lesson Manager
@@ -2728,6 +2856,57 @@ function esc(s) {
 function escRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// ===== MEDIA MODAL =====
+function openMediaModal() {
+  if (!STATE.lesson) { lmToast('⚠️ 수업을 먼저 로드하세요'); return; }
+  $('#media-modal').classList.add('open');
+}
+function closeMediaModal() {
+  $('#media-modal').classList.remove('open');
+  $('#m-img-url').value = '';
+  $('#m-img-caption').value = '';
+  $('#m-video-url').value = '';
+  // reset upload tab
+  mmSelectedFile = null;
+  $('#mm-preview').classList.add('hidden');
+  $('#m-btn-upload').disabled = true;
+  $('#mm-upload-status').textContent = '';
+}
+
+function addMediaSlide(slideData) {
+  if (!STATE.lesson?.slides) return;
+  STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, slideData);
+  renderAllSlides();
+  goToSlide(STATE.currentSlide + 1);
+  saveLessonStore(getLessonStore()); // persist
+  closeMediaModal();
+}
+
+function toEmbedUrl(url) {
+  // YouTube watch → embed
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  // Vimeo
+  const vi = url.match(/vimeo\.com\/(\d+)/);
+  if (vi) return `https://player.vimeo.com/video/${vi[1]}`;
+  return url; // already embed or other platform
+}
+
+async function uploadToStorage(file) {
+  if (!sb) { lmToast('⚠️ Supabase 연결 안 됨'); return null; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  $('#mm-upload-status').textContent = '업로드 중...';
+  const { error } = await sb.storage.from('lesson-media').upload(path, file, { upsert: false });
+  if (error) {
+    $('#mm-upload-status').textContent = '❌ 업로드 실패: ' + error.message;
+    return null;
+  }
+  return sb.storage.from('lesson-media').getPublicUrl(path).data.publicUrl;
+}
+
+let mmSelectedFile = null;
 
 // ===== DRAWINGS PERSISTENCE (localStorage only) =====
 function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
@@ -3149,6 +3328,80 @@ function renderSavedList() {
 
   // 렌더 시 bulk bar 초기화
   $('#lm-bulk-bar').classList.add('hidden');
+}
+
+function setupMediaModal() {
+  $('#mm-close').addEventListener('click', closeMediaModal);
+  $('#media-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeMediaModal(); });
+
+  // 탭 전환
+  $$('.mm-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      $$('.mm-tab').forEach(x => x.classList.remove('active'));
+      $$('.mm-section').forEach(x => x.classList.add('hidden'));
+      t.classList.add('active');
+      $('#ms-' + t.dataset.mtab).classList.remove('hidden');
+    });
+  });
+
+  // ── 이미지 URL 탭 ──
+  $('#m-btn-url').addEventListener('click', () => {
+    const src = $('#m-img-url').value.trim();
+    if (!src) { lmToast('⚠️ URL을 입력하세요'); return; }
+    const caption = $('#m-img-caption').value.trim();
+    const fit = $('#m-img-fit').value;
+    addMediaSlide({ type: 'image', title: caption || '', src, caption, fit });
+  });
+
+  // ── 파일 업로드 탭 ──
+  const dropzone = $('#mm-dropzone');
+  const fileInput = $('#m-file-input');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) mmSetFile(file);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) mmSetFile(fileInput.files[0]);
+  });
+
+  function mmSetFile(file) {
+    if (!file.type.startsWith('image/')) { lmToast('⚠️ 이미지 파일만 지원됩니다'); return; }
+    mmSelectedFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      $('#mm-preview-img').src = ev.target.result;
+      $('#mm-preview-name').textContent = file.name;
+      $('#mm-preview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+    $('#m-btn-upload').disabled = false;
+    $('#mm-upload-status').textContent = '';
+  }
+
+  $('#m-btn-upload').addEventListener('click', async () => {
+    if (!mmSelectedFile) return;
+    $('#m-btn-upload').disabled = true;
+    const url = await uploadToStorage(mmSelectedFile);
+    if (url) {
+      addMediaSlide({ type: 'image', title: mmSelectedFile.name, src: url, caption: '', fit: 'contain' });
+    } else {
+      $('#m-btn-upload').disabled = false;
+    }
+  });
+
+  // ── YouTube / 영상 탭 ──
+  $('#m-btn-video').addEventListener('click', () => {
+    const raw = $('#m-video-url').value.trim();
+    if (!raw) { lmToast('⚠️ URL을 입력하세요'); return; }
+    const embedUrl = toEmbedUrl(raw);
+    const html = `<div class="video-wrapper"><iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
+    addMediaSlide({ type: 'freeform', title: '', html });
+  });
 }
 
 function setupLessonManager() {
@@ -3822,6 +4075,7 @@ slideTrack.addEventListener('click', e => {
 
 init();
 setupLessonManager();
+setupMediaModal();
 // Clear page
 $('#btn-clear-page').addEventListener('click', openClearPageModal);
 $('#cp-cancel').addEventListener('click', closeClearPageModal);
