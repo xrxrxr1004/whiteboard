@@ -2030,6 +2030,7 @@ function addBlankSlide() {
   STATE.lesson.slides.splice(STATE.currentSlide + 1, 0, { type: 'blank' });
   renderAllSlides();
   goToSlide(STATE.currentSlide + 1);
+  persistCurrentLesson();
 }
 
 // ===== 2-F TOGGLE =====
@@ -2299,7 +2300,7 @@ function onPointerUp(e) {
   STATE.slideDrawings[idx].push(STATE.currentStroke);
   STATE.undoStack[idx] = [];
   STATE.currentStroke = null;
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 function drawSegment(from, to, stroke) {
@@ -2507,7 +2508,7 @@ function clearDrawing() {
     STATE.undoStack[idx] = strokes.slice();
     STATE.slideDrawings[idx] = [];
     redrawCanvas(idx);
-    saveDrawingsLocal();
+    saveDrawings();
   }
 }
 
@@ -2519,7 +2520,7 @@ function undo() {
   if (!STATE.undoStack[idx]) STATE.undoStack[idx] = [];
   STATE.undoStack[idx].push(removed);
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 function redo() {
@@ -2530,7 +2531,7 @@ function redo() {
   if (!STATE.slideDrawings[idx]) STATE.slideDrawings[idx] = [];
   STATE.slideDrawings[idx].push(restored);
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
 }
 
 // ===== TOOL MANAGEMENT =====
@@ -2986,10 +2987,14 @@ function toEmbedUrl(url) {
 }
 
 
-// ===== DRAWINGS PERSISTENCE (localStorage only) =====
+// ===== DRAWINGS PERSISTENCE (localStorage + lesson.drawings → Supabase) =====
 function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
-function saveDrawingsLocal() {
+function saveDrawings() {
   try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
+  if (STATE.lesson) {
+    STATE.lesson.drawings = STATE.slideDrawings;
+    persistCurrentLesson();
+  }
 }
 function loadDrawingsLocal(lessonKey) {
   try {
@@ -3110,7 +3115,8 @@ function loadLessonData(data, lessonKey) {
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
   STATE.currentSlide = 0;
-  STATE.slideDrawings = loadDrawingsLocal(lessonKey || getCurrentLessonId());
+  const _localDraw = loadDrawingsLocal(lessonKey || getCurrentLessonId());
+  STATE.slideDrawings = Object.keys(_localDraw).length ? _localDraw : (data.drawings || {});
   STATE.undoStack = {};
   STATE.twoFActive = false;
   STATE.isDrawing = false;
@@ -3259,7 +3265,7 @@ function clearPage() {
   STATE.slideDrawings[idx] = [];
   STATE.undoStack[idx] = [];
   redrawCanvas(idx);
-  saveDrawingsLocal();
+  saveDrawings();
   const slideEl = slideTrack.children[idx];
   if (slideEl) _clearSlideEl(slideEl, idx);
 }
@@ -3271,7 +3277,7 @@ function clearAllPages() {
     const slideEl = slideTrack.children[i];
     if (slideEl) _clearSlideEl(slideEl, i);
   }
-  saveDrawingsLocal();
+  saveDrawings();
   goToSlide(0);
 }
 function openClearPageModal() { $('#cp-modal').classList.add('open'); }
