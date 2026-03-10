@@ -754,18 +754,6 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
   border-radius: 8px; font-size: 14px; background: var(--bg, #f8fafc);
   color: var(--slide-text, #0f172a); box-sizing: border-box; cursor: pointer;
 }
-.mm-dropzone {
-  border: 2px dashed var(--border, #e2e8f0); border-radius: 10px;
-  padding: 28px 16px; text-align: center; cursor: pointer; font-size: 14px;
-  color: var(--text-secondary, #64748b); background: var(--bg, #f8fafc);
-  transition: border-color .15s, background .15s;
-}
-.mm-dropzone:hover, .mm-dropzone.drag-over {
-  border-color: var(--purple, #7c3aed); background: rgba(124,58,237,0.04);
-}
-.mm-preview { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-.mm-preview img { max-height: 100px; max-width: 140px; border-radius: 6px; object-fit: contain; }
-.mm-preview-name { font-size: 13px; color: var(--text-secondary, #64748b); word-break: break-all; }
 .mm-btn {
   padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
   font-size: 14px; font-weight: 600;
@@ -782,8 +770,6 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
 .theme-dark .mm-tab:hover:not(.active) { background: #1a1a2e; }
 .theme-dark .mm-input, .theme-dark .mm-select { background: #0a0a12; border-color: #2a2a40; color: #d0d0e0; }
 .theme-dark .mm-input:focus { border-color: #a78bfa; }
-.theme-dark .mm-dropzone { background: #0a0a12; border-color: #2a2a40; }
-.theme-dark .mm-dropzone:hover, .theme-dark .mm-dropzone.drag-over { border-color: #a78bfa; }
 
 /* ===== MISC ===== */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
@@ -1313,7 +1299,6 @@ window.LESSON_LIBRARY.push({
       </div>
       <div class="mm-tabs">
         <button class="mm-tab active" data-mtab="url">이미지 URL</button>
-        <button class="mm-tab" data-mtab="upload">파일 업로드</button>
         <button class="mm-tab" data-mtab="video">YouTube / 영상</button>
       </div>
       <div class="mm-body">
@@ -1326,19 +1311,6 @@ window.LESSON_LIBRARY.push({
             <option value="cover">cover — 꽉 채우기</option>
           </select>
           <button class="mm-btn" id="m-btn-url">슬라이드에 추가</button>
-        </div>
-        <!-- 파일 업로드 탭 -->
-        <div class="mm-section hidden" id="ms-upload">
-          <div class="mm-dropzone" id="mm-dropzone">
-            파일을 드래그하거나 클릭해서 선택<br><small>JPG · PNG · GIF · WebP · SVG</small>
-          </div>
-          <input type="file" id="m-file-input" accept="image/*" style="display:none">
-          <div class="mm-preview hidden" id="mm-preview">
-            <img id="mm-preview-img" alt="preview">
-            <span class="mm-preview-name" id="mm-preview-name"></span>
-          </div>
-          <button class="mm-btn" id="m-btn-upload" disabled>업로드 & 슬라이드 추가</button>
-          <div class="mm-status" id="mm-upload-status"></div>
         </div>
         <!-- YouTube / 영상 탭 -->
         <div class="mm-section hidden" id="ms-video">
@@ -2927,11 +2899,6 @@ function closeMediaModal() {
   $('#m-img-url').value = '';
   $('#m-img-caption').value = '';
   $('#m-video-url').value = '';
-  // reset upload tab
-  mmSelectedFile = null;
-  $('#mm-preview').classList.add('hidden');
-  $('#m-btn-upload').disabled = true;
-  $('#mm-upload-status').textContent = '';
 }
 
 // STATE.lesson 변경사항을 localStorage + Supabase에 올바르게 반영
@@ -3018,20 +2985,6 @@ function toEmbedUrl(url) {
   return url; // already embed or other platform
 }
 
-async function uploadToStorage(file) {
-  if (!sb) { lmToast('⚠️ Supabase 연결 안 됨'); return null; }
-  const ext = file.name.split('.').pop().toLowerCase();
-  const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  $('#mm-upload-status').textContent = '업로드 중...';
-  const { error } = await sb.storage.from('lesson-media').upload(path, file, { upsert: false });
-  if (error) {
-    $('#mm-upload-status').textContent = '❌ 업로드 실패: ' + error.message;
-    return null;
-  }
-  return sb.storage.from('lesson-media').getPublicUrl(path).data.publicUrl;
-}
-
-let mmSelectedFile = null;
 
 // ===== DRAWINGS PERSISTENCE (localStorage only) =====
 function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
@@ -3476,47 +3429,6 @@ function setupMediaModal() {
     const caption = $('#m-img-caption').value.trim();
     const fit = $('#m-img-fit').value;
     addMediaSlide({ type: 'image', title: caption || '', src, caption, fit });
-  });
-
-  // ── 파일 업로드 탭 ──
-  const dropzone = $('#mm-dropzone');
-  const fileInput = $('#m-file-input');
-
-  dropzone.addEventListener('click', () => fileInput.click());
-  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault(); dropzone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) mmSetFile(file);
-  });
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) mmSetFile(fileInput.files[0]);
-  });
-
-  function mmSetFile(file) {
-    if (!file.type.startsWith('image/')) { lmToast('⚠️ 이미지 파일만 지원됩니다'); return; }
-    mmSelectedFile = file;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      $('#mm-preview-img').src = ev.target.result;
-      $('#mm-preview-name').textContent = file.name;
-      $('#mm-preview').classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-    $('#m-btn-upload').disabled = false;
-    $('#mm-upload-status').textContent = '';
-  }
-
-  $('#m-btn-upload').addEventListener('click', async () => {
-    if (!mmSelectedFile) return;
-    $('#m-btn-upload').disabled = true;
-    const url = await uploadToStorage(mmSelectedFile);
-    if (url) {
-      addMediaSlide({ type: 'image', title: '', src: url, caption: '', fit: 'contain' });
-    } else {
-      $('#m-btn-upload').disabled = false;
-    }
   });
 
   // ── YouTube / 영상 탭 ──
