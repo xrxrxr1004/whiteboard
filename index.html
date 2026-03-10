@@ -3019,7 +3019,6 @@ async function syncFromSupabase() {
   const store = getLessonStore();
   let changed = false;
   data.forEach(row => {
-    if (row.lesson_key.startsWith('lib_')) return;
     const local = store[row.lesson_key];
     if (!local || row.saved_at > (local.savedAt ?? 0)) {
       store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
@@ -3029,11 +3028,11 @@ async function syncFromSupabase() {
   if (changed) { saveLessonStoreLocal(store); renderSavedList?.(); }
 }
 
-// 로컬 → DB 동기화 (upsert, lib_ 제외)
+// 로컬 → DB 동기화 (upsert)
 async function pushLessonsToSB(store) {
   if (!sb) return;
   const rows = Object.entries(store)
-    .filter(([key, entry]) => !key.startsWith('lib_') && entry.data)
+    .filter(([key, entry]) => entry.data)
     .map(([lesson_key, entry]) => ({
       lesson_key,
       title: entry.data?.title ?? lesson_key,
@@ -3054,7 +3053,7 @@ async function pushLessonsToSB(store) {
 
 // 소프트 삭제
 async function deleteFromSB(key) {
-  if (!sb || key.startsWith('lib_')) return;
+  if (!sb) return;
   try {
     await sb.from('lessons')
       .update({ deleted_at: new Date().toISOString() })
