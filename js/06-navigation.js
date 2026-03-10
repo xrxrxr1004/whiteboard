@@ -24,26 +24,56 @@ function deleteCurrentSlide() {
   const slides = STATE.lesson.slides;
   if (slides.length <= 1) { alert('마지막 페이지는 삭제할 수 없습니다.'); return; }
   const idx = STATE.currentSlide;
-  slides.splice(idx, 1);
-  // 필기도 삭제
-  delete STATE.slideDrawings[idx];
-  delete STATE.undoStack[idx];
-  // 인덱스 재배치 (삭제 후 뒤 슬라이드 인덱스 당김)
-  const newDrawings = {}, newUndo = {};
-  Object.keys(STATE.slideDrawings).forEach(k => {
-    const ki = parseInt(k);
-    newDrawings[ki > idx ? ki - 1 : ki] = STATE.slideDrawings[k];
-  });
-  Object.keys(STATE.undoStack).forEach(k => {
-    const ki = parseInt(k);
-    newUndo[ki > idx ? ki - 1 : ki] = STATE.undoStack[k];
-  });
-  STATE.slideDrawings = newDrawings;
-  STATE.undoStack = newUndo;
-  saveDrawings();
-  renderAllSlides();
-  goToSlide(Math.min(idx, slides.length - 1));
-  persistCurrentLesson();
+  openDeleteModal(
+    '페이지 삭제',
+    `${idx + 1}번 페이지를 삭제합니다. 필기도 함께 삭제됩니다.`,
+    () => {
+      closeDeleteModal();
+      // 실행취소용 스냅샷
+      const savedSlide = JSON.parse(JSON.stringify(slides[idx]));
+      const savedDrawings = STATE.slideDrawings[idx] ? [...STATE.slideDrawings[idx]] : [];
+      const savedUndoStack = STATE.undoStack[idx]   ? [...STATE.undoStack[idx]]   : [];
+      // 삭제
+      slides.splice(idx, 1);
+      delete STATE.slideDrawings[idx];
+      delete STATE.undoStack[idx];
+      // 인덱스 재배치 (삭제 후 뒤 슬라이드 인덱스 당김)
+      const newD = {}, newU = {};
+      Object.keys(STATE.slideDrawings).forEach(k => {
+        const ki = parseInt(k);
+        newD[ki > idx ? ki - 1 : ki] = STATE.slideDrawings[k];
+      });
+      Object.keys(STATE.undoStack).forEach(k => {
+        const ki = parseInt(k);
+        newU[ki > idx ? ki - 1 : ki] = STATE.undoStack[k];
+      });
+      STATE.slideDrawings = newD; STATE.undoStack = newU;
+      saveDrawings();
+      renderAllSlides();
+      goToSlide(Math.min(idx, slides.length - 1));
+      persistCurrentLesson();
+      // 실행취소 토스트
+      showUndoToast('페이지가 삭제됐습니다', () => {
+        slides.splice(idx, 0, savedSlide);
+        const restD = {}, restU = {};
+        Object.keys(STATE.slideDrawings).forEach(k => {
+          const ki = parseInt(k);
+          restD[ki >= idx ? ki + 1 : ki] = STATE.slideDrawings[k];
+        });
+        Object.keys(STATE.undoStack).forEach(k => {
+          const ki = parseInt(k);
+          restU[ki >= idx ? ki + 1 : ki] = STATE.undoStack[k];
+        });
+        if (savedDrawings.length) restD[idx] = savedDrawings;
+        if (savedUndoStack.length) restU[idx] = savedUndoStack;
+        STATE.slideDrawings = restD; STATE.undoStack = restU;
+        saveDrawings();
+        renderAllSlides();
+        goToSlide(idx);
+        persistCurrentLesson();
+      });
+    }
+  );
 }
 
 // ===== 2-F TOGGLE =====

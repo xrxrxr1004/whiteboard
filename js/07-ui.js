@@ -98,3 +98,18 @@ function updateUI() {
   $('#btn-panel').classList.toggle('active', STATE.panelOpen);
 }
 
+
+// ── 삭제 확인 모달 ──
+let _delConfirmCb = null;
+function openDeleteModal(title, desc, onConfirm) {
+  $('#del-modal-title').textContent = title;
+  $('#del-modal-desc').textContent = desc;
+  _delConfirmCb = onConfirm;
+  $('#del-modal').classList.add('open');
+}
+function closeDeleteModal() {
+  $('#del-modal').classList.remove('open');
+  _delConfirmCb = null;
+}
+
+// showUndoToast → 10-lesson-manager.js의 기존 함수 재사용

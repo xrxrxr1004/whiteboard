@@ -600,6 +600,12 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
   background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
 }
 #cp-modal.open { display: flex; }
+#del-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+  align-items: center; justify-content: center; z-index: 600;
+}
+#del-modal.open { display: flex; }
 .cp-dialog {
   background: var(--surface, #fff); color: var(--slide-text, #0f172a);
   border-radius: 14px; width: 340px; max-width: 90vw;

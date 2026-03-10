@@ -59,3 +59,7 @@ $('#cp-cancel').addEventListener('click', closeClearPageModal);
 $('#cp-confirm').addEventListener('click', () => { clearPage(); closeClearPageModal(); });
 $('#cp-confirm-all').addEventListener('click', () => { clearAllPages(); closeClearPageModal(); });
 $('#cp-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeClearPageModal(); });
+// Delete confirm modal 이벤트
+$('#del-cancel').addEventListener('click', closeDeleteModal);
+$('#del-confirm').addEventListener('click', () => { if (_delConfirmCb) _delConfirmCb(); });
+$('#del-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDeleteModal(); });

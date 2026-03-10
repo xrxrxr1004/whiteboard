@@ -97,12 +97,31 @@ function attachMediaHandles(slideEl, wrapEl, data) {
   if (deleteBtn) {
     deleteBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
-      const slide = STATE.lesson?.slides?.[STATE.currentSlide];
-      if (slide?.overlays) {
-        slide.overlays = slide.overlays.filter(o => o !== data);
-      }
-      wrap.remove();
-      persistCurrentLesson();
+      openDeleteModal(
+        '미디어 삭제',
+        '이 미디어를 삭제합니다.',
+        () => {
+          closeDeleteModal();
+          const snapIdx = STATE.currentSlide;
+          const slide = STATE.lesson?.slides?.[snapIdx];
+          if (slide?.overlays) slide.overlays = slide.overlays.filter(o => o !== data);
+          wrap.remove();
+          persistCurrentLesson();
+          showUndoToast('미디어가 삭제됐습니다', () => {
+            const s = STATE.lesson?.slides?.[snapIdx];
+            if (!s) return;
+            if (!s.overlays) s.overlays = [];
+            s.overlays.push(data);
+            const slideEl2 = slideTrack.children[snapIdx];
+            if (slideEl2) {
+              const newWrap = createOverlayWrap(data);
+              slideEl2.appendChild(newWrap);
+              attachMediaHandles(slideEl2, newWrap, data);
+            }
+            persistCurrentLesson();
+          });
+        }
+      );
     });
   }
 
