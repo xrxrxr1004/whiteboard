@@ -3912,7 +3912,12 @@ function importLessonLibrary() {
     if (!data || !data.slides) return;
     const id = 'lib_' + (data.title || '').replace(/[^a-zA-Z0-9가-힣]/g, '_').substring(0, 40);
     validIds.add(id);
-    if (!store[id] || store[id].source === 'library') {
+    // 사용자 수정 여부: source가 'user'이거나, 어느 슬라이드든 overlay/blank가 있으면 덮어쓰지 않음
+    const userModified = store[id] && (
+      store[id].source === 'user' ||
+      store[id].data?.slides?.some(s => s.overlays?.length || s.type === 'blank')
+    );
+    if (!store[id] || (!userModified && store[id].source === 'library')) {
       store[id] = { data, savedAt: Date.now(), source: 'library' };
       imported++;
     }
