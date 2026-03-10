@@ -3085,7 +3085,8 @@ async function syncFromSupabase() {
   const currentId = getCurrentLessonId();
   data.forEach(row => {
     const local = store[row.lesson_key];
-    if (!local || row.saved_at > (local.savedAt ?? 0)) {
+    // library 항목은 사용자 저장 데이터(클라우드)가 항상 우선
+    if (!local || local.source === 'library' || row.saved_at > (local.savedAt ?? 0)) {
       store[row.lesson_key] = { data: row.data, savedAt: row.saved_at, source: 'cloud' };
       changed = true;
       if (row.lesson_key === currentId) currentUpdated = true;
@@ -3918,7 +3919,7 @@ function importLessonLibrary() {
       store[id].data?.slides?.some(s => s.overlays?.length || s.type === 'blank')
     );
     if (!store[id] || (!userModified && store[id].source === 'library')) {
-      store[id] = { data, savedAt: Date.now(), source: 'library' };
+      store[id] = { data, savedAt: 0, source: 'library' };  // 0 = 항상 클라우드/user 데이터에 yield
       imported++;
     }
   });
