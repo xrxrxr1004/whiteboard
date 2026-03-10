@@ -350,7 +350,9 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   border-radius: 50%; opacity: 0; transition: opacity 0.15s;
   transform: translate(-50%, -50%);
 }
-.media-wrap:hover .resize-handle { opacity: 1; }
+.media-wrap:hover .resize-handle,
+.media-wrap.selected .resize-handle { opacity: 1; }
+.media-wrap.selected { outline: 2px solid rgba(100,100,255,0.55); outline-offset: 2px; }
 .media-delete-btn {
   position: absolute; top: 0; right: 0; z-index: 10;
   width: 22px; height: 22px; border-radius: 50%;
@@ -360,7 +362,8 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
   transform: translate(40%, -40%);
   display: flex; align-items: center; justify-content: center;
 }
-.media-wrap:hover .media-delete-btn { opacity: 1; }
+.media-wrap:hover .media-delete-btn,
+.media-wrap.selected .media-delete-btn { opacity: 1; }
 .media-delete-btn:hover { background: rgba(180,0,0,1); }
 .resize-handle.tl { top: 0;   left: 0;   cursor: nwse-resize; }
 .resize-handle.tr { top: 0;   right: 0;  cursor: nesw-resize; transform: translate(50%,-50%); }
@@ -1100,6 +1103,9 @@ body.panel-resizing, body.panel-resizing * { cursor: col-resize !important; user
       </button>
       <button class="tool-btn" id="btn-add-media" title="미디어 추가 (M)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </button>
+      <button class="tool-btn" id="btn-delete-slide" title="이 페이지 삭제" style="color:#ef4444">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
       </button>
     </div>
     <!-- SPACER: 오른쪽 도구 그룹을 끝으로 밀기 -->
@@ -2046,6 +2052,33 @@ function addBlankSlide() {
   goToSlide(STATE.currentSlide + 1);
 }
 
+function deleteCurrentSlide() {
+  if (!STATE.lesson?.slides) return;
+  const slides = STATE.lesson.slides;
+  if (slides.length <= 1) { alert('마지막 페이지는 삭제할 수 없습니다.'); return; }
+  const idx = STATE.currentSlide;
+  slides.splice(idx, 1);
+  // 필기도 삭제
+  delete STATE.slideDrawings[idx];
+  delete STATE.undoStack[idx];
+  // 인덱스 재배치 (삭제 후 뒤 슬라이드 인덱스 당김)
+  const newDrawings = {}, newUndo = {};
+  Object.keys(STATE.slideDrawings).forEach(k => {
+    const ki = parseInt(k);
+    newDrawings[ki > idx ? ki - 1 : ki] = STATE.slideDrawings[k];
+  });
+  Object.keys(STATE.undoStack).forEach(k => {
+    const ki = parseInt(k);
+    newUndo[ki > idx ? ki - 1 : ki] = STATE.undoStack[k];
+  });
+  STATE.slideDrawings = newDrawings;
+  STATE.undoStack = newUndo;
+  saveDrawings();
+  renderAllSlides();
+  goToSlide(Math.min(idx, slides.length - 1));
+  persistCurrentLesson();
+}
+
 // ===== 2-F TOGGLE =====
 // 첫 2문장 + 마지막 1문장만 표시, 나머지 숨김 토글
 function toggle2F() {
@@ -2694,6 +2727,13 @@ function setupEvents() {
   $('#btn-fullscreen').addEventListener('click', toggleFullscreen);
   $('#btn-add-slide').addEventListener('click', addBlankSlide);
   $('#btn-add-media').addEventListener('click', openMediaModal);
+  $('#btn-delete-slide').addEventListener('click', deleteCurrentSlide);
+  // 슬라이드 영역 클릭 시 overlay 선택 해제
+  slideTrack.addEventListener('mousedown', e => {
+    if (!e.target.closest('.media-wrap')) {
+      document.querySelectorAll('.media-wrap.selected').forEach(w => w.classList.remove('selected'));
+    }
+  });
   $('#panel-close-btn').addEventListener('click', togglePanel);
   $$('.panel-tab').forEach(btn => btn.addEventListener('click', () => {
     STATE.panelTab = btn.dataset.tab;
@@ -2989,6 +3029,14 @@ function attachMediaHandles(slideEl, wrapEl, data) {
   const dragBar = wrapEl.querySelector('.video-drag-bar');
   const dragEl  = dragBar || wrap;
   if (!wrap) return;
+
+  // ── 클릭 선택 / 해제 ──
+  wrap.addEventListener('mousedown', e => {
+    // 이미 selected인 경우엔 다른 핸들 동작에 영향 안 줌
+    // 다른 wrap 선택 해제 후 현재 선택
+    slideEl.querySelectorAll('.media-wrap.selected').forEach(w => { if (w !== wrap) w.classList.remove('selected'); });
+    wrap.classList.add('selected');
+  });
 
   // ── 삭제 ──
   if (deleteBtn) {
