@@ -331,6 +331,29 @@ html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', -apple
 .slide-image { max-width: 100%; max-height: calc(100% - 80px); object-fit: contain; border-radius: 8px; margin: 0 auto; display: block; }
 .image-caption { text-align: center; font-size: 0.8em; color: var(--slide-text-secondary); margin-top: 12px; }
 
+/* ── Media slide (image / video) — free-position layout ── */
+.media-slide { position: relative; overflow: hidden; padding: 0; }
+.media-wrap {
+  position: absolute;
+  cursor: grab;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+  user-select: none; -webkit-user-select: none;
+}
+.media-wrap:active { cursor: grabbing; }
+.media-wrap .slide-image { width: 100%; display: block; border-radius: 0; max-height: none; }
+.media-wrap .image-caption { text-align:center; font-size:0.8em; padding:5px 8px; background:rgba(0,0,0,0.45); color:#fff; margin-top:0; }
+.resize-handle {
+  position: absolute; bottom: 0; right: 0;
+  width: 22px; height: 22px;
+  cursor: nwse-resize; z-index: 5;
+  background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,0.8) 45%);
+  border-radius: 0 0 8px 0;
+  opacity: 0.6; transition: opacity 0.15s;
+}
+.media-wrap:hover .resize-handle { opacity: 1; }
+
 /* Blank */
 .slide-blank { justify-content: center; align-items: center; }
 .slide-blank::after {
@@ -1890,10 +1913,35 @@ const RENDERERS = {
   },
 
   image(el, data) {
-    el.innerHTML = `<div class="slide-header">${esc(data.title || '')}</div>
-      <img class="slide-image" src="${esc(data.src || '')}" alt="${esc(data.caption || '')}"
-        style="object-fit:${data.fit || 'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
-      ${data.caption ? `<div class="image-caption">${esc(data.caption)}</div>` : ''}`;
+    const w = data.width ?? 60;
+    const x = data.x ?? (100 - w) / 2;
+    const y = data.y ?? 10;
+    el.classList.add('media-slide');
+    el.innerHTML = `
+      <div class="media-wrap" style="left:${x}%;top:${y}%;width:${w}%">
+        <img class="slide-image" src="${esc(data.src || '')}" alt="${esc(data.caption || '')}"
+          style="object-fit:${data.fit || 'contain'}" onerror="this.alt='이미지를 찾을 수 없습니다'">
+        ${data.caption ? `<div class="image-caption">${esc(data.caption)}</div>` : ''}
+        <div class="resize-handle"></div>
+      </div>`;
+    attachMediaHandles(el, data);
+  },
+
+  video(el, data) {
+    const w = data.width ?? 60;
+    const x = data.x ?? (100 - w) / 2;
+    const y = data.y ?? 10;
+    el.classList.add('media-slide');
+    el.innerHTML = `
+      <div class="media-wrap" style="left:${x}%;top:${y}%;width:${w}%">
+        <div class="video-wrapper">
+          <iframe src="${esc(data.src || '')}" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+          </iframe>
+        </div>
+        <div class="resize-handle"></div>
+      </div>`;
+    attachMediaHandles(el, data);
   },
 
   blank(el) {
@@ -2887,6 +2935,57 @@ function addMediaSlide(slideData) {
   closeMediaModal();
 }
 
+function attachMediaHandles(slideEl, data) {
+  const wrap   = slideEl.querySelector('.media-wrap');
+  const handle = slideEl.querySelector('.resize-handle');
+  if (!wrap) return;
+
+  // ── 이동 (wrap 본체 드래그) ──
+  wrap.addEventListener('mousedown', e => {
+    if (handle && (e.target === handle || handle.contains(e.target))) return;
+    e.preventDefault(); e.stopPropagation();
+    const sw = slideEl.offsetWidth, sh = slideEl.offsetHeight;
+    const ox = e.clientX - parseFloat(wrap.style.left) / 100 * sw;
+    const oy = e.clientY - parseFloat(wrap.style.top)  / 100 * sh;
+    const onMove = mv => {
+      const nx = Math.max(0, Math.min(100 - parseFloat(wrap.style.width), (mv.clientX - ox) / sw * 100));
+      const ny = Math.max(0, Math.min(85, (mv.clientY - oy) / sh * 100));
+      wrap.style.left = nx + '%';
+      wrap.style.top  = ny + '%';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      data.x = parseFloat(wrap.style.left);
+      data.y = parseFloat(wrap.style.top);
+      saveLessonStore(getLessonStore());
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // ── 리사이즈 (우하단 핸들 드래그) ──
+  if (!handle) return;
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation();
+    const sw = slideEl.offsetWidth;
+    const startX = e.clientX, startW = wrap.offsetWidth;
+    const onMove = mv => {
+      const maxW = 100 - parseFloat(wrap.style.left || 0);
+      const nw = Math.round(Math.max(15, Math.min(maxW, (startW + mv.clientX - startX) / sw * 100)));
+      wrap.style.width = nw + '%';
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      data.width = parseFloat(wrap.style.width);
+      saveLessonStore(getLessonStore());
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
 function toEmbedUrl(url) {
   // YouTube watch → embed
   const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
@@ -3392,7 +3491,7 @@ function setupMediaModal() {
     $('#m-btn-upload').disabled = true;
     const url = await uploadToStorage(mmSelectedFile);
     if (url) {
-      addMediaSlide({ type: 'image', title: mmSelectedFile.name, src: url, caption: '', fit: 'contain' });
+      addMediaSlide({ type: 'image', title: '', src: url, caption: '', fit: 'contain' });
     } else {
       $('#m-btn-upload').disabled = false;
     }
@@ -3403,8 +3502,7 @@ function setupMediaModal() {
     const raw = $('#m-video-url').value.trim();
     if (!raw) { lmToast('⚠️ URL을 입력하세요'); return; }
     const embedUrl = toEmbedUrl(raw);
-    const html = `<div class="video-wrapper"><iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
-    addMediaSlide({ type: 'freeform', title: '', html });
+    addMediaSlide({ type: 'video', title: '', src: embedUrl, width: 60 });
   });
 }
 
