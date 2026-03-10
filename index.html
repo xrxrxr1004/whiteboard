@@ -2987,14 +2987,10 @@ function toEmbedUrl(url) {
 }
 
 
-// ===== DRAWINGS PERSISTENCE (localStorage + lesson.drawings → Supabase) =====
+// ===== DRAWINGS PERSISTENCE (localStorage only — 기기별 독립) =====
 function drawingsKey() { return DRAW_KEY_PREFIX + (getCurrentLessonId() || '__default'); }
 function saveDrawings() {
   try { localStorage.setItem(drawingsKey(), JSON.stringify(STATE.slideDrawings)); } catch(e) {}
-  if (STATE.lesson) {
-    STATE.lesson.drawings = STATE.slideDrawings;
-    persistCurrentLesson();
-  }
 }
 function loadDrawingsLocal(lessonKey) {
   try {
@@ -3115,8 +3111,7 @@ function loadLessonData(data, lessonKey) {
   STATE.bgIndex = BACKGROUNDS.indexOf(s.defaultBg || 'white');
   if (STATE.bgIndex < 0) STATE.bgIndex = 0;
   STATE.currentSlide = 0;
-  const _localDraw = loadDrawingsLocal(lessonKey || getCurrentLessonId());
-  STATE.slideDrawings = Object.keys(_localDraw).length ? _localDraw : (data.drawings || {});
+  STATE.slideDrawings = loadDrawingsLocal(lessonKey || getCurrentLessonId());
   STATE.undoStack = {};
   STATE.twoFActive = false;
   STATE.isDrawing = false;
