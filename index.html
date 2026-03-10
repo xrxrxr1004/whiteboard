@@ -2912,6 +2912,7 @@ function persistCurrentLesson() {
   if (!store[id]) store[id] = {};
   store[id].data    = STATE.lesson;
   store[id].savedAt = Date.now();
+  store[id].source  = 'user';   // library 덮어쓰기 방지
   saveLessonStore(store);
 }
 
